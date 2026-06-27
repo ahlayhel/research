@@ -135,9 +135,155 @@
 
     /* ── Debate marker ── */
     .debate-arrow { color: #f78166; font-size: 0.7rem; font-style: italic; margin-top: 3px; }
+
+    /* ── Zoom & Navigation ── */
+    #zoom-bar {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 30px;
+      padding: 5px 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    #zoom-bar button {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid #30363d;
+      background: #0d1117;
+      color: #c9d1d9;
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #zoom-bar button:hover { background: #21262d; border-color: #58a6ff; color: #58a6ff; }
+    #zoom-bar button:active { transform: scale(0.92); }
+    #zoom-level {
+      font-size: 0.72rem;
+      color: #8b949e;
+      min-width: 38px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    #zoom-bar .zoom-divider {
+      width: 1px; height: 18px;
+      background: #30363d;
+      margin: 0 2px;
+    }
+    #zoom-bar .nav-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid #30363d;
+      background: #0d1117;
+      color: #c9d1d9;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #zoom-bar .nav-btn:hover { background: #21262d; border-color: #56d364; color: #56d364; }
+    #zoom-bar .nav-btn:active { transform: scale(0.92); }
+
+    /* ── Sticky scroll track at bottom ── */
+    #scroll-track {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      background: #161b22;
+      border-top: 1px solid #21262d;
+      padding: 7px 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #scroll-track .st-label {
+      font-size: 0.68rem;
+      color: #8b949e;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #scroll-track .arrow-btn {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: 1.5px solid #30363d;
+      background: #0d1117;
+      color: #c9d1d9;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.12s;
+    }
+    #scroll-track .arrow-btn:hover  { background: #21262d; border-color: #56d364; color: #56d364; }
+    #scroll-track .arrow-btn:active { transform: scale(0.9); }
+    #scroll-range {
+      flex: 1;
+      appearance: none;
+      height: 5px;
+      border-radius: 3px;
+      background: #21262d;
+      outline: none;
+      cursor: pointer;
+    }
+    #scroll-range::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #58a6ff;
+      cursor: grab;
+      border: 2px solid #0d1117;
+    }
+    #scroll-range::-moz-range-thumb {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #58a6ff;
+      cursor: grab;
+      border: 2px solid #0d1117;
+    }
+    #scroll-pos {
+      font-size: 0.68rem;
+      color: #8b949e;
+      min-width: 42px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Give space for the fixed bottom bar */
+    body { padding-bottom: 56px; }
+
+    /* Zoomable wrapper */
+    #zoomable {
+      transform-origin: top center;
+      transition: transform 0.18s ease;
+    }
   </style>
 </head>
 <body>
+
+<!-- ═══ ZOOM TOOLBAR ═══ -->
+<div id="zoom-bar">
+  <button id="btn-zoom-out" title="Zoom out">−</button>
+  <span id="zoom-level">100%</span>
+  <button id="btn-zoom-in"  title="Zoom in">+</button>
+  <div class="zoom-divider"></div>
+  <button class="nav-btn" id="btn-reset" title="Reset zoom &amp; scroll">⊙</button>
+</div>
+
+<!-- ═══ STICKY SCROLL BAR ═══ -->
+<div id="scroll-track">
+  <span class="st-label">← Scroll →</span>
+  <button class="arrow-btn" id="btn-left"  title="Scroll left">◀</button>
+  <input  type="range" id="scroll-range" min="0" max="1000" value="0" step="1">
+  <button class="arrow-btn" id="btn-right" title="Scroll right">▶</button>
+  <span id="scroll-pos">0%</span>
+</div>
 
 <h1>Western HCM Scholars of Islamic Ḥadīth — Lineage Tree</h1>
 <p class="subtitle">
@@ -160,7 +306,8 @@
   <div class="legend-item"><div class="legend-dot" style="background:#c9843e"></div>External / Non-Muslim Sources Scholar</div>
 </div>
 
-<div class="wide">
+<div class="wide" id="wide-scroller">
+<div id="zoomable">
 <div class="tree-grid">
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -780,6 +927,7 @@
 </div><!-- /Section VI children-row -->
 
 </div><!-- /tree-grid -->
+</div><!-- /zoomable -->
 </div><!-- /wide -->
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -814,5 +962,90 @@
   </ul>
 </div>
 
+<script>
+(function () {
+  // ── Zoom ──────────────────────────────────────────────────────
+  let scale = 1.0;
+  const STEP = 0.1, MIN = 0.3, MAX = 2.0;
+  const zoomable  = document.getElementById('zoomable');
+  const zoomLabel = document.getElementById('zoom-level');
+  const scroller  = document.getElementById('wide-scroller');
+
+  function applyZoom() {
+    zoomable.style.transform = `scale(${scale})`;
+    // shrink/grow the zoomable wrapper so the scroller updates its scrollWidth
+    zoomable.style.width  = (100 / scale) + '%';
+    zoomable.style.height = 'auto';
+    zoomLabel.textContent = Math.round(scale * 100) + '%';
+    syncSlider();
+  }
+
+  document.getElementById('btn-zoom-in').addEventListener('click', () => {
+    scale = Math.min(MAX, Math.round((scale + STEP) * 10) / 10);
+    applyZoom();
+  });
+  document.getElementById('btn-zoom-out').addEventListener('click', () => {
+    scale = Math.max(MIN, Math.round((scale - STEP) * 10) / 10);
+    applyZoom();
+  });
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    scale = 1.0;
+    applyZoom();
+    scroller.scrollLeft = 0;
+    syncSlider();
+  });
+
+  // Ctrl+Wheel zoom
+  scroller.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    scale = e.deltaY < 0
+      ? Math.min(MAX, Math.round((scale + STEP) * 10) / 10)
+      : Math.max(MIN, Math.round((scale - STEP) * 10) / 10);
+    applyZoom();
+  }, { passive: false });
+
+  // ── Scroll slider ────────────────────────────────────────────
+  const slider   = document.getElementById('scroll-range');
+  const posLabel = document.getElementById('scroll-pos');
+
+  function syncSlider() {
+    const max = scroller.scrollWidth - scroller.clientWidth;
+    if (max <= 0) { slider.value = 0; posLabel.textContent = '0%'; return; }
+    const pct = scroller.scrollLeft / max;
+    slider.value = Math.round(pct * 1000);
+    posLabel.textContent = Math.round(pct * 100) + '%';
+  }
+
+  scroller.addEventListener('scroll', syncSlider);
+
+  slider.addEventListener('input', () => {
+    const max = scroller.scrollWidth - scroller.clientWidth;
+    scroller.scrollLeft = (slider.value / 1000) * max;
+    posLabel.textContent = Math.round(slider.value / 10) + '%';
+  });
+
+  const SCROLL_STEP = 320;
+  document.getElementById('btn-left').addEventListener('click', () => {
+    scroller.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
+  });
+  document.getElementById('btn-right').addEventListener('click', () => {
+    scroller.scrollBy({ left:  SCROLL_STEP, behavior: 'smooth' });
+  });
+
+  // Keyboard arrow navigation when not in a text field
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft')  scroller.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
+    if (e.key === 'ArrowRight') scroller.scrollBy({ left:  SCROLL_STEP, behavior: 'smooth' });
+    if (e.key === '+' || e.key === '=') { scale = Math.min(MAX, Math.round((scale+STEP)*10)/10); applyZoom(); }
+    if (e.key === '-')                  { scale = Math.max(MIN, Math.round((scale-STEP)*10)/10); applyZoom(); }
+    if (e.key === '0')                  { scale = 1.0; applyZoom(); scroller.scrollLeft = 0; }
+  });
+
+  // init
+  applyZoom();
+})();
+</script>
 </body>
 </html>
