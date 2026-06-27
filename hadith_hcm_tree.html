@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hadith HCM — Western Scholar Lineage Tree</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 30px 20px 60px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      color: #58a6ff;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8b949e;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 24px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Tree structure ── */
+    .node-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .node {
+      border-radius: 10px;
+      padding: 10px 16px;
+      min-width: 210px;
+      max-width: 290px;
+      text-align: center;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      cursor: default;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .node .name  { font-weight: 700; font-size: 0.95rem; }
+    .node .dates { font-size: 0.75rem; opacity: 0.7; margin-top: 1px; }
+    .node .role  { font-size: 0.78rem; font-style: italic; margin-top: 4px; opacity: 0.85; }
+    .node .note  { font-size: 0.72rem; margin-top: 4px; opacity: 0.7; line-height: 1.3; }
+
+    /* ── Connectors ── */
+    .connector-down { width: 2px; background: #30363d; height: 24px; flex-shrink: 0; }
+    .connector-up   { width: 2px; background: #30363d; height: 24px; flex-shrink: 0; }
+    .children-row   { display: flex; align-items: flex-start; gap: 12px; }
+    .child-col      { display: flex; flex-direction: column; align-items: center; }
+    .h-bar          { height: 2px; background: #30363d; width: 100%; }
+
+    /* ── Colour classes ── */
+    /* orientalist  */ .orientalist { background: #1a2e1a; border-color: #2ea043; }
+    /* semitist     */ .semitist    { background: #1a1a2e; border-color: #388bfd; }
+    /* source-crit  */ .source-crit { background: #0d2230; border-color: #79c0ff; }
+    /* hadith-crit  */ .hadith-crit { background: #2a1a2e; border-color: #bc8cff; }
+    /* legal-hist   */ .legal-hist  { background: #2e1e0f; border-color: #d29922; }
+    /* revisionist  */ .revisionist { background: #2e1208; border-color: #f78166; }
+    /* papyrologist */ .papyro      { background: #1a2a2e; border-color: #76e3ea; }
+    /* theologian   */ .theologian  { background: #2e2a0d; border-color: #e3b341; }
+    /* icma         */ .icma        { background: #0d2e1e; border-color: #3fb950; }
+    /* contemporary */ .contemp     { background: #1a0d2e; border-color: #db61a2; }
+    /* external-src */ .ext-src     { background: #2a1f10; border-color: #c9843e; }
+
+    /* ── Section labels ── */
+    .section-label {
+      margin: 50px 0 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #58a6ff;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 6px;
+      width: 100%;
+      max-width: 1400px;
+    }
+
+    /* ── Wide scroll container ── */
+    .wide { overflow-x: auto; width: 100%; }
+    .tree-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 1000px;
+      padding: 10px 20px 20px;
+    }
+
+    /* ── Cross-links panel ── */
+    .cross-links {
+      max-width: 1000px;
+      margin: 40px auto 0;
+      padding: 20px;
+      background: #161b22;
+      border-radius: 10px;
+      border: 1px solid #21262d;
+    }
+    .cross-links h2 { color: #58a6ff; font-size: 1rem; margin-bottom: 12px; }
+    .cross-links ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+    .cross-links ul li::before { content: "↔ "; color: #8b949e; }
+    .cross-links ul li { font-size: 0.83rem; color: #c9d1d9; line-height: 1.4; }
+    strong { color: #e6edf3; }
+
+    /* ── Debate marker ── */
+    .debate-arrow { color: #f78166; font-size: 0.7rem; font-style: italic; margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+<h1>Western HCM Scholars of Islamic Ḥadīth — Lineage Tree</h1>
+<p class="subtitle">
+  Lines show intellectual descent: supervisor → student, or strong documented influence (top → bottom).
+  Red border = SOAS revisionist school · Green border = ICMA school · Scroll right on narrow screens.
+</p>
+
+<!-- ═══════════════ LEGEND ═══════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#2ea043"></div>Orientalist / Islamicist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#388bfd"></div>Semitist / Philologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#79c0ff"></div>Source Critic / Islamic Historian</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bc8cff"></div>Hadith Critic / Isnād Analyst</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div>Islamic Legal Historian</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f78166"></div>Revisionist / SOAS School</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#76e3ea"></div>Papyrologist / Manuscript Scholar</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div>Islamic Theologian / Kalam Scholar</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>ICMA Practitioner</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#db61a2"></div>Contemporary Synthetic Scholar</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c9843e"></div>External / Non-Muslim Sources Scholar</div>
+</div>
+
+<div class="wide">
+<div class="tree-grid">
+
+<!-- ═══════════════════════════════════════════════════════════
+     I · THE BIBLICAL-CRITICAL ROOT
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">I · The Biblical-Critical Methodological Root (19th Century)</div>
+
+<!-- Root pair: Nöldeke and Wellhausen — the twin trunks -->
+<div class="children-row">
+
+  <!-- NÖLDEKE branch -->
+  <div class="child-col">
+    <div class="node semitist">
+      <div class="name">Theodor Nöldeke</div>
+      <div class="dates">1836 – 1930</div>
+      <div class="role">Semitist / Quranic Philologist</div>
+      <div class="note">Geschichte des Qorāns (1860); applied rigorous German Altertumswissenschaft to Islamic texts; set philological standards for the entire field; in close correspondence with Goldziher throughout his career</div>
+    </div>
+  </div>
+
+  <!-- WELLHAUSEN — central trunk -->
+  <div class="child-col">
+    <div class="node semitist">
+      <div class="name">Julius Wellhausen</div>
+      <div class="dates">1844 – 1918</div>
+      <div class="role">Biblical &amp; Islamic Source Critic</div>
+      <div class="note">Documentary Hypothesis for the Pentateuch (1878) supplied the source-critical template; Skizzen und Vorarbeiten (1884–99) applied the same Quellenkritik to early Islamic chronicles; his concept of "projecting back" later material under earlier names is Schacht's central tool</div>
+    </div>
+    <div class="connector-down"></div>
+    <!-- Wellhausen's influence reaches Goldziher -->
+    <div class="node orientalist" style="font-size:0.72rem;padding:6px 12px;max-width:220px;opacity:0.65;border-style:dashed">
+      <div class="name">→ Goldziher</div>
+      <div class="note">Goldziher absorbed Wellhausen's "projecting back" concept and systematised it as the mechanism of isnād fabrication (see Section II)</div>
+    </div>
+  </div>
+
+  <!-- Parallel 19th-century pioneers -->
+  <div class="child-col">
+    <div class="node orientalist">
+      <div class="name">Gustaf Weil</div>
+      <div class="dates">1808 – 1889</div>
+      <div class="role">Orientalist / Proto-HCM Biographer</div>
+      <div class="note">Muhammed der Prophet (1843); first European to apply biblical-critical philological methods to Islamic biography; the framework Sprenger then expanded</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node orientalist">
+        <div class="name">Alois Sprenger</div>
+        <div class="dates">1813 – 1893</div>
+        <div class="role">Orientalist / Critical Biographer</div>
+        <div class="note">Das Leben und die Lehre des Mohammed (3 vols, 1861–65); first noticed the "common transmitter" problem in isnāds — the pivotal insight Schacht later systematised as "common link theory"</div>
+      </div>
+      <div class="connector-down"></div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node orientalist">
+          <div class="name">→ Goldziher influenced</div>
+          <div class="dates">(see Section II)</div>
+          <div class="role" style="font-style:normal;opacity:0.6">Goldziher built on Sprenger's isnād observations</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Muir — parallel British tradition -->
+  <div class="child-col">
+    <div class="node orientalist">
+      <div class="name">Sir William Muir</div>
+      <div class="dates">1819 – 1905</div>
+      <div class="role">Orientalist / Islamic Biographer</div>
+      <div class="note">Life of Mahomet (4 vols, 1858–61); ranked sources by reliability; distinguished early from late strata of the biographical tradition; established British critical Orientalism feeding into the SOAS school</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node orientalist">
+        <div class="name">D.S. Margoliouth</div>
+        <div class="dates">1858 – 1940</div>
+        <div class="role">Orientalist / Laudian Prof. of Arabic, Oxford</div>
+        <div class="note">Mohammed and the Rise of Islam (1905); applied German critical methods in British context at Oxford; established the tradition of sceptical Islamic studies in Britain that Wansbrough later radicalised at SOAS</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Section I children-row -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     II · GOLDZIHER — THE FOUNDING HUB
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">II · Goldziher — The Founding Hub of HCM Hadith Studies (1889–1921)</div>
+
+<div class="node-wrapper">
+  <div class="node orientalist" style="border-color:#58a6ff; background:#091428; min-width:280px">
+    <div class="name">Ignaz Goldziher</div>
+    <div class="dates">1850 – 1921 · Budapest</div>
+    <div class="role">Islamicist — Founding Father of Western HCM Hadith Studies</div>
+    <div class="note">Muhammedanische Studien (2 vols, 1889–90): demonstrated systematically through isnād + matn analysis that the hadith corpus reflects the theological, political, and juridical disputes of the first three Islamic centuries rather than authentic prophetic reports. Established: (1) systematic isnād criticism; (2) matn (content) analysis; (3) the "projecting back" mechanism. Every HCM hadith scholar since either builds on or must respond to Goldziher.</div>
+  </div>
+</div>
+<div class="connector-down"></div>
+
+<!-- Goldziher's children -->
+<div class="children-row">
+
+  <!-- Schacht — the main intellectual heir -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node hadith-crit" style="border-color:#58a6ff; background:#0d1228; min-width:260px">
+      <div class="name">Joseph Schacht</div>
+      <div class="dates">1902 – 1969 · Oxford / Leiden / Columbia</div>
+      <div class="role">Islamic Legal Historian — HCM Systematiser</div>
+      <div class="note">The Origins of Muhammadan Jurisprudence (1950): formalised Goldziher's insights into a rigorous theory — the "common link" is the actual point of fabrication; no legal tradition predates the early 2nd century AH; legal hadith are retrospective projections. An Introduction to Islamic Law (1964). Set the entire subsequent HCM agenda.</div>
+    </div>
+    <div class="connector-down"></div>
+    <!-- Schacht's tree is in Section III -->
+    <div class="node hadith-crit" style="font-size:0.72rem;padding:5px 10px;opacity:0.65;border-style:dashed">
+      <div class="name">→ Full lineage in Section III</div>
+    </div>
+  </div>
+
+  <!-- Wensinck — the toolmaker -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node hadith-crit">
+      <div class="name">A.J. Wensinck</div>
+      <div class="dates">1882 – 1939 · Leiden</div>
+      <div class="role">Arabist / Hadith Concordance Compiler</div>
+      <div class="note">Compiled the monumental Concordance et indices de la tradition musulmane (7 vols) — indexed every hadith in the canonical Six Books by key Arabic words. A Handbook of Early Muhammadan Tradition (1927). Made Schacht's large-scale isnād pattern analysis methodologically feasible; overlapped with Schacht at Leiden.</div>
+    </div>
+  </div>
+
+  <!-- Horovitz -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node orientalist">
+      <div class="name">Josef Horovitz</div>
+      <div class="dates">1874 – 1925 · Frankfurt</div>
+      <div class="role">Orientalist / Early Hadith Philologist</div>
+      <div class="note">Koranische Untersuchungen (1926); meticulous philological analysis of early hadith collections to detect anachronisms; analysis of literary relationships between pre-canonical collections laid direct groundwork for Schacht; died young, cutting short a major influence.</div>
+    </div>
+  </div>
+
+  <!-- Caetani -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node source-crit">
+      <div class="name">Leone Caetani</div>
+      <div class="dates">1869 – 1935 · Rome</div>
+      <div class="role">Islamic Historian / Positivist Source Critic</div>
+      <div class="note">Annali dell'Islam (10 vols, 1905–26); extreme positivist-rationalist Quellenkritik applied to Islamic annalistic chronicles; meticulously cross-checked dates across parallel sources; anticipated Noth/Conrad systematic source criticism; influenced Schacht's sceptical framework.</div>
+    </div>
+  </div>
+
+  <!-- Lammens -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node orientalist">
+      <div class="name">Henri Lammens</div>
+      <div class="dates">1862 – 1937 · Beirut</div>
+      <div class="role">Orientalist / Sira Source Critic</div>
+      <div class="note">Belgian Jesuit at Université Saint-Joseph, Beirut; argued Sira narratives are retrospective pious elaboration shaped by later ideological concerns; tendentious but methodologically influential on the principle that biography reflects later community needs; Crone applied this insight with greater rigour.</div>
+    </div>
+  </div>
+
+  <!-- Watt — moderate tradition -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node source-crit">
+      <div class="name">W. Montgomery Watt</div>
+      <div class="dates">1909 – 2006 · Edinburgh</div>
+      <div class="role">Islamicist / Moderate HCM Biographer</div>
+      <div class="note">Muhammad at Mecca (1953) &amp; Muhammad at Medina (1956); weighed internal contradictions, sociological plausibility, and theological bias without wholesale rejection of the sources; modelled how to use Islamic sources critically without nihilism; trained a generation of British and American Islamicists.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node source-crit">
+          <div class="name">Wilferd Madelung</div>
+          <div class="dates">b. 1930 · Oxford</div>
+          <div class="role">Islamic Historian / Moderate HCM Practitioner</div>
+          <div class="note">Laudian Professor of Arabic, Oxford; The Succession to Muhammad (1997) — model of moderate HCM applied to the first civil war; weighs Shia, Kharijite, and Sunni sources against each other; shows rigorous criticism need not lead to radical scepticism.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node source-crit">
+          <div class="name">Fred M. Donner</div>
+          <div class="dates">b. 1945 · Chicago</div>
+          <div class="role">Islamic Historian / Source Critic</div>
+          <div class="note">Narratives of Islamic Origins (1998); Muhammad and the Believers (2010); rigorous source-critical methodology without wholesale SOAS-style scepticism; the senior historian of early Islam in the American tradition; influenced by Watt's moderating approach.</div>
+        </div>
+        <div class="connector-down"></div>
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node source-crit">
+            <div class="name">Chase F. Robinson</div>
+            <div class="dates">b. 1957 · CUNY</div>
+            <div class="role">Islamic Historian / Historiographical Analyst</div>
+            <div class="note">Islamic Historiography (2003) — the standard English-language guide to early Islamic source criticism; extends Noth/Conrad topos method; more sceptical than Madelung but less radical than Crone; mainstream critical methodology in Anglo-American Islamic historiography.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Section II children-row -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     III · THE SCHACHT NEXUS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">III · The Schacht Nexus — Those Who Built On, Challenged, or Refined His Framework (1940s–1990s)</div>
+
+<!-- Schacht repeated as section root -->
+<div class="node-wrapper">
+  <div class="node hadith-crit" style="border-color:#58a6ff;background:#0d1228;padding:8px 14px">
+    <div class="name">Joseph Schacht (1902–1969)</div>
+    <div class="role">See Section II · Origins of Muhammadan Jurisprudence (1950)</div>
+  </div>
+</div>
+<div class="connector-down"></div>
+
+<div class="children-row">
+
+  <!-- LEFT: Juynboll → Motzki (isnād refinement lineage) -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node hadith-crit">
+      <div class="name">G.H.A. Juynboll</div>
+      <div class="dates">1935 – 2010 · Leiden</div>
+      <div class="role">Islamicist / Common Link Theorist</div>
+      <div class="note">Muslim Tradition (1983); Encyclopedia of Canonical Hadith (2007); refashioned Schacht's common link theory with far more systematic isnād documentation; argued the common link represents not a fabricator but the point at which a tradition entered wide circulation; dated most legal hadith to late 1st/early 2nd century AH — later than Muslim tradition claims but earlier than Schacht allowed.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node icma" style="border-width:2px">
+        <div class="name">Harald Motzki</div>
+        <div class="dates">1948 – 2019 · Nijmegen (Radboud)</div>
+        <div class="role">Islamicist — Inventor of ICMA (Isnād-Cum-Matn Analysis)</div>
+        <div class="note">The Origins of Islamic Jurisprudence (1991/2002); developed ICMA — the most rigorous current HCM method: analyses BOTH the isnād structure AND the textual variation (matn) across parallel transmission branches simultaneously. Demonstrated that legal hadith Schacht assigned to the 2nd century AH can be traced with ICMA to the 1st century. Directly challenged and partially overturned Schacht and Juynboll.</div>
+      </div>
+      <div class="connector-down"></div>
+      <!-- Motzki's students -->
+      <div class="children-row">
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node icma">
+            <div class="name">Andreas Görke</div>
+            <div class="dates">b. ~1970 · Hamburg</div>
+            <div class="role">Islamicist / ICMA Practitioner (Sīra)</div>
+            <div class="note">PhD under Motzki at Nijmegen; applied ICMA to Sīra (prophetic biography) traditions; co-edited the definitive ICMA handbook Analysing Muslim Traditions (2010) with Motzki &amp; Schoeler; collaborated with Boekhoff-van der Voort on the Farewell Pilgrimage traditions — the most rigorous ICMA sīra analysis to date.</div>
+          </div>
+          <div class="connector-down"></div>
+          <div class="child-col">
+            <div class="connector-up"></div>
+            <div class="node icma">
+              <div class="name">Nicolet Boekhoff-van der Voort</div>
+              <div class="dates">b. ~1975 · Nijmegen</div>
+              <div class="role">Islamicist / ICMA Practitioner</div>
+              <div class="note">PhD under Motzki; applied ICMA to Farewell Pilgrimage tradition cluster; produced detailed isnād maps and systematic matn variation analyses; primary collaborator with Görke; represents the second generation of ICMA scholars and the principal continuation of Motzki's programme.</div>
+            </div>
+          </div>
+        </div>
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node icma">
+            <div class="name">Herbert Berg</div>
+            <div class="dates">b. 1962 · UNC Wilmington</div>
+            <div class="role">Islamicist / ICMA Practitioner (Tafsīr)</div>
+            <div class="note">The Development of Exegesis in Early Islam (2000); applied Motzki's ICMA to exegetical traditions attributed to Ibn ʿAbbās; demonstrated isnād-cum-matn patterns consistent with 1st-century origin; extended ICMA from legal to tafsīr (Quranic commentary) traditions — a new domain for the method.</div>
+          </div>
+        </div>
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node icma">
+            <div class="name">Eerik Dickinson</div>
+            <div class="dates">b. ~1965</div>
+            <div class="role">Hadith Scholar / Classical Criticism Analyst</div>
+            <div class="note">The Development of Early Sunnite Hadith Criticism (2001); applied HCM to the classical Muslim rijāl (transmitter evaluation) tradition itself; showed partial overlap between classical Muslim critical method and Western HCM; a key bridge between the two traditions.</div>
+          </div>
+        </div>
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node icma">
+            <div class="name">Scott Lucas</div>
+            <div class="dates">b. ~1972 · Arizona</div>
+            <div class="role">Hadith Critic / Classical Method Analyst</div>
+            <div class="note">Constructive Critics, Hadith Literature, and the Articulation of Sunnī Islam (2004); used HCM informed by Motzki's ICMA findings to evaluate the historical value of classical Sunni hadith critics (Ibn Maʿīn, Ibn Ḥanbal); argued classical critics were engaged in a genuine historical project.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTRE-LEFT: Schacht's challengers — Abbott and Sezgin -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="papyro node" style="background:#071e20;border-color:#76e3ea;border-style:dashed;max-width:240px">
+      <div class="name" style="color:#f78166">⊥ CHALLENGED Schacht ⊥</div>
+      <div class="note" style="margin-top:4px">The following scholars directly contested Schacht's core thesis using papyrological and manuscript evidence</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node papyro">
+          <div class="name">Nabia Abbott</div>
+          <div class="dates">1897 – 1981 · Chicago (Oriental Inst.)</div>
+          <div class="role">Papyrologist / Islamic Historian</div>
+          <div class="note">Studies in Arabic Literary Papyri (3 vols, 1957–72); examined earliest surviving Arabic papyri — including 1st–2nd century AH hadith material — and demonstrated written transmission significantly predating the 2nd century AH Schacht claimed was the earliest possible. First woman professor at the Oriental Institute; mounted the first major papyrological challenge to Schacht.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node papyro">
+          <div class="name">Fuat Sezgin</div>
+          <div class="dates">1924 – 2018 · Frankfurt</div>
+          <div class="role">Historian of Arabic Sciences / Schacht's Principal Challenger</div>
+          <div class="note">Geschichte des arabischen Schrifttums (17+ vols, 1967–2015); vol. I documented written hadith collections from the 1st century AH that Schacht claimed could not exist; the most comprehensive manuscript-based refutation of Schacht's scepticism; trained under Hellmut Ritter; his evidence was the key enabling resource for Motzki's ICMA programme.</div>
+        </div>
+        <div class="connector-down"></div>
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node icma">
+            <div class="name">Gregor Schoeler</div>
+            <div class="dates">b. 1944 · Basel</div>
+            <div class="role">Arabist / Oral-Written Transmission Scholar</div>
+            <div class="note">The Genesis of Literature in Islam (1998/2009); proposed the "hypomnema" model — scholars took aide-mémoire notes to support oral transmission before formal publication (ekdosis) in the 2nd century AH; more nuanced than either Schacht's late-writing thesis or naive acceptance of full early written transmission; compatible with Sezgin's evidence and Motzki's ICMA findings; co-edited the ICMA handbook with Motzki and Görke.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTRE-RIGHT: Hallaq — internal HCM critique of Schacht -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node legal-hist">
+      <div class="name">Wael Hallaq</div>
+      <div class="dates">b. 1955 · McGill / Columbia</div>
+      <div class="role">Islamic Legal Historian / Internal Critic of Schacht</div>
+      <div class="note">A History of Islamic Legal Theories (1997); The Origins and Evolution of Islamic Law (2005); systematically challenged Schacht's foundational thesis from within the HCM tradition — used HCM methodology rigorously against Schacht's conclusions to produce a more historically accurate account. The most technically formidable academic critic of Schacht working inside the critical tradition.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node legal-hist">
+          <div class="name">Christopher Melchert</div>
+          <div class="dates">b. ~1960 · Oxford</div>
+          <div class="role">Islamic Legal Historian / Hadith Canonisation Scholar</div>
+          <div class="note">The Formation of the Sunni Schools of Law (1997); Ahmad ibn Hanbal (2006); traced how the four Sunni legal schools solidified around hadith collections in the 3rd–4th centuries AH; supports the general Schachtian model while producing more nuanced conclusions; Oxford context links him to Madelung's moderate-critical tradition.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node legal-hist">
+          <div class="name">David S. Powers</div>
+          <div class="dates">b. ~1950 · Cornell</div>
+          <div class="role">Islamic Law / HCM Case Study Analyst</div>
+          <div class="note">Studies in Qur'an and Hadith: The Formation of the Islamic Law of Inheritance (1986); demonstrated through HCM that specific inheritance-law traditions were shaped by juristic debates; Zaid (2014) combined source criticism, Quranic analysis, and hadith criticism. Case-study approach demonstrates HCM's power applied to specific hadith families.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node legal-hist">
+          <div class="name">A. Kevin Reinhart</div>
+          <div class="dates">b. ~1953 · Dartmouth</div>
+          <div class="role">Islamic Law &amp; Ritual / HCM Practitioner</div>
+          <div class="note">Before Revelation (1995); Lived Islam (2020); expert in Islamic legal theory and ritual purity; analyses how Islamic law selects, evaluates, and integrates specific hadith into juristic reasoning; Oxford-trained; connects to the British moderate-critical tradition.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: John Burton — heterodox response -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node legal-hist" style="border-color:#f78166">
+      <div class="name">John Burton</div>
+      <div class="dates">1929 – 2011</div>
+      <div class="role">Quranic &amp; Hadith Source Critic</div>
+      <div class="note">The Collection of the Qur'an (1977): argued against Wansbrough — Quran was collected by the Prophet himself, not Uthman; Sources of Islamic Law (1990): challenged both Schacht's juristic-development model and Wansbrough's late-dating thesis; his heterodox positions provoked one of the most technically argued debates in late 20th-century Islamic studies.</div>
+      <div class="debate-arrow">⇄ Debated both Schacht and Wansbrough</div>
+    </div>
+  </div>
+
+</div><!-- /Section III children-row -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     IV · THE SOAS REVISIONIST SCHOOL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">IV · The SOAS Revisionist / Radical Sceptic School (1960s–1990s)</div>
+
+<!-- Root: Wansbrough -->
+<div class="node-wrapper">
+  <div class="node revisionist" style="min-width:270px">
+    <div class="name">John Wansbrough</div>
+    <div class="dates">1928 – 2002 · SOAS, University of London</div>
+    <div class="role">Islamicist — Radical Source Critic</div>
+    <div class="note">Quranic Studies (1977) &amp; The Sectarian Milieu (1978): applied the most radical possible source criticism to Islamic origins — argued the Quran was not fixed until the late 2nd/early 3rd century AH; Islam took its final shape in the sectarian disputes of Iraq; all canonical Islamic texts are retrospective theological constructions. Borrowed Wellhausen's Documentary Hypothesis without any moderating assumption that authentic material survived. The most radical application of HCM principles to Islamic texts.</div>
+  </div>
+</div>
+<div class="connector-down"></div>
+
+<!-- Wansbrough's direct students / heavily influenced -->
+<div class="children-row">
+
+  <!-- Crone -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node revisionist">
+      <div class="name">Patricia Crone</div>
+      <div class="dates">1945 – 2015 · Oxford / Princeton IAS</div>
+      <div class="role">Islamic Historian — Revisionist HCM Leader</div>
+      <div class="note">PhD at SOAS under Wansbrough's influence; Hagarism (1977, with Cook); Meccan Trade and the Rise of Islam (1987); Slaves on Horses (1980); Roman, Provincial and Islamic Law (1987). One of the most rigorous, creative, and agenda-setting HCM scholars of her generation; challenged both traditional and Schacht-style accounts of Islamic legal and political origins.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node ext-src">
+        <div class="name">Robert Hoyland</div>
+        <div class="dates">b. 1966 · Oxford / NYU / Princeton IAS</div>
+        <div class="role">Late Antique Historian / External Sources Specialist</div>
+        <div class="note">Seeing Islam as Others Saw It (1997) — comprehensive survey of all non-Muslim Greek, Syriac, Coptic, Armenian, Hebrew, and Latin sources for early Islamic history; provides external controls on Islamic tradition; In God's Path (2015); Arabia and the Arabs (2001). Extended Crone's sceptical non-Muslim-sources methodology into the most thorough external-evidence programme in the field.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cook -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node revisionist">
+      <div class="name">Michael Cook</div>
+      <div class="dates">b. 1940 · Princeton</div>
+      <div class="role">Islamicist / Historical-Critical Analyst</div>
+      <div class="note">SOAS; Hagarism (1977, with Crone): proposed early "Hagarism" (Ishmaelite messianism) was transformed into Islam through contact with Samaritan-Jewish traditions — based entirely on non-Muslim sources. Commanding in Abū Dāwūd (1981) — traced a single hadith through its full isnād history. Early Muslim Dogma (1981) — rigorous source criticism of theological hadith. Later moderated his most radical positions.</div>
+    </div>
+  </div>
+
+  <!-- Calder — SOAS tradition into legal texts -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node revisionist">
+      <div class="name">Norman Calder</div>
+      <div class="dates">1950 – 1998 · Manchester</div>
+      <div class="role">Islamic Legal Historian / SOAS-Influenced Source Critic</div>
+      <div class="note">SOAS intellectual environment; Studies in Early Muslim Jurisprudence (1993): applied Wansbrough's hermeneutics of suspicion to the foundational legal texts themselves — texts attributed to Shafi'i and Malik are composite documents compiled over generations. Extended Schacht's chronological scepticism to the jurisprudential genre as a literary form. Died at 48.</div>
+    </div>
+  </div>
+
+  <!-- Rubin — form criticism -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node revisionist">
+      <div class="name">Uri Rubin</div>
+      <div class="dates">b. 1944 · Tel Aviv</div>
+      <div class="role">Islamicist / Sīra Form Critic</div>
+      <div class="note">The Eye of the Beholder (1995): applied form criticism and literary analysis to the Sīra tradition; demonstrated that Muhammad's biography is shaped by biblical typology, prophetic archetypes, and eschatological narrative schemas — not neutral historical memory. The standard form-critical analysis of the Sīra; influenced Görke's later ICMA-based sīra studies.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node icma">
+        <div class="name">→ Görke (Section III)</div>
+        <div class="note" style="font-size:0.7rem">Görke extended Rubin's form-critical sīra analysis with ICMA methodology</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Section IV children-row -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     V · SOURCE CRITICISM, TOPOS METHOD & THEOLOGICAL HCM
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">V · Source Criticism (Topos Method) &amp; Theological HCM (1970s–2000s)</div>
+
+<div class="children-row">
+
+  <!-- Noth → Conrad (topos / Islamic historiography source criticism) -->
+  <div class="child-col">
+    <div class="node source-crit">
+      <div class="name">Albrecht Noth</div>
+      <div class="dates">1937 – 1999 · Hamburg</div>
+      <div class="role">Islamic Historian / Topos Source Critic</div>
+      <div class="note">The Early Arabic Historical Tradition (German 1973, English with Conrad 1994): established systematic Quellenkritik for early Islamic historiography; identified recurring literary "topoi" — stock motifs (miraculous surrenders, round numbers, edifying conversions) — as indicators of literary composition rather than historical memory. By mapping topoi across independent source traditions, identified genuine independence vs. literary dependence. The Noth/Conrad methodology became the standard framework for source criticism of early Islamic historiography.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node source-crit">
+        <div class="name">Lawrence I. Conrad</div>
+        <div class="dates">b. 1948 · Hamburg / Wellcome Inst. London</div>
+        <div class="role">Islamic Historian / Source Critic</div>
+        <div class="note">Co-authored and translated The Early Arabic Historical Tradition (English 1994); edited The Byzantine and Early Islamic Near East (4 vols) — used both Greek and Arabic sources to check Islamic narrative reliability against contemporaneous Byzantine and Syriac accounts. His external comparative method anticipated Hoyland's comprehensive non-Muslim source survey.</div>
+      </div>
+      <div class="connector-down"></div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node source-crit">
+          <div class="name">→ Robinson (Section II)</div>
+          <div class="note" style="font-size:0.7rem">Robinson's Islamic Historiography extends and popularises the Noth/Conrad topos method</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- van Ess — theological HCM -->
+  <div class="child-col">
+    <div class="node theologian">
+      <div class="name">Josef van Ess</div>
+      <div class="dates">b. 1934 · Tübingen</div>
+      <div class="role">Islamic Theologian / Critical Historian of Kalam</div>
+      <div class="note">Theologie und Gesellschaft im 2. und 3. Jahrhundert Hidschra (6 vols, 1991–97) — the most comprehensive critical study of early Mutazilite and Sunni kalam; applied rigorous HCM to the theological hadith tradition; demonstrated that doctrinal disputes (predestination, nature of the Quran, free will) shaped the transmission and attribution of theological traditions — the same fabrication mechanisms Goldziher identified in the legal corpus operated in the theological sphere.</div>
+    </div>
+  </div>
+
+  <!-- Hellmut Ritter → Sezgin (already in Section III) but Ritter deserves his own node -->
+  <div class="child-col">
+    <div class="node source-crit">
+      <div class="name">Hellmut Ritter</div>
+      <div class="dates">1892 – 1971 · Istanbul / Frankfurt</div>
+      <div class="role">Orientalist / Arabic Manuscript Philologist</div>
+      <div class="note">German Orientalist at Istanbul and Frankfurt; master philologist and editor of medieval Arabic texts with encyclopaedic knowledge of Turkish and Middle Eastern manuscript archives; his rigorous manuscript-based method and knowledge of the Arabic written tradition were the direct training for Fuat Sezgin, whose monumental Geschichte des arabischen Schrifttums became the primary counter-argument to Schacht's denial of early written transmission.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node papyro">
+        <div class="name">→ Sezgin (Section III)</div>
+        <div class="note" style="font-size:0.7rem">Sezgin's doctoral supervisor; Ritter's training enabled the monumental Geschichte des arabischen Schrifttums</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /Section V children-row -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VI · CONTEMPORARY SYNTHETIC SCHOLARS (1990–PRESENT)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">VI · Contemporary Synthetic &amp; Specialist Scholars (1990–Present)</div>
+
+<div class="children-row">
+
+  <!-- Brown — most widely read synthetic HCM -->
+  <div class="child-col">
+    <div class="node contemp">
+      <div class="name">Jonathan A.C. Brown</div>
+      <div class="dates">b. 1977 · Georgetown</div>
+      <div class="role">Islamic Studies — Synthetic HCM Scholar</div>
+      <div class="note">Hadith: Muhammad's Legacy in the Medieval and Modern World (2009) — the most widely used English-language synthesis of HCM hadith scholarship; The Canonization of al-Bukhārī and Muslim (2007) — rigorous academic study of how the two most authoritative collections achieved canonical status; Misquoting Muhammad (2014). Engages seriously with both Western HCM and the classical Islamic scholarly tradition; a Muslim scholar who neither dismisses Western criticism nor abandons critical methodology.</div>
+    </div>
+  </div>
+
+  <!-- Sadeghi — computational/stochastic turn -->
+  <div class="child-col">
+    <div class="node contemp">
+      <div class="name">Behnam Sadeghi</div>
+      <div class="dates">b. ~1975 · Stanford</div>
+      <div class="role">Islamicist / Computational &amp; Probabilistic Methods</div>
+      <div class="note">Applied probabilistic modelling to Quran manuscript variants using the Sanaa palimpsest (2010, with Bergmann) — demonstrated statistically that a distinct early Quranic textual tradition predated the Uthmanic canonisation. Applied stochastic models to assess hadith transmission reliability; represents the computational/quantitative turn in HCM — extending the statistical rigour of population genetics-style methods into manuscript and hadith analysis.</div>
+    </div>
+  </div>
+
+  <!-- Hoyland (repeated for contemporary context) -->
+  <div class="child-col">
+    <div class="node ext-src">
+      <div class="name">Robert Hoyland</div>
+      <div class="dates">b. 1966 · NYU / Princeton IAS</div>
+      <div class="role">Late Antique &amp; Islamic Historian / External Sources</div>
+      <div class="note">See also Section IV. In the contemporary era, Hoyland's work has become the standard reference for using non-Muslim contemporaneous sources (Greek, Syriac, Coptic, Armenian, Hebrew) as external controls on the Islamic hadith and historical tradition — a methodology that both corroborates some traditions and raises questions about others.</div>
+    </div>
+  </div>
+
+  <!-- Lucas (contemporary continuation of classical-method HCM) -->
+  <div class="child-col">
+    <div class="node icma">
+      <div class="name">Scott Lucas</div>
+      <div class="dates">b. ~1972 · Arizona</div>
+      <div class="role">Hadith Critic / Classical Sunni Method Analyst</div>
+      <div class="note">Constructive Critics, Hadith Literature, and the Articulation of Sunnī Islam (2004); see also Section III. Represents the contemporary programme of using HCM to evaluate what the classical Muslim critical tradition (ʿilm al-rijāl) was actually doing — a bridge between Western HCM and classical Islamic hadith methodology that is central to current debates about authenticity.</div>
+    </div>
+  </div>
+
+  <!-- Melchert (contemporary) -->
+  <div class="child-col">
+    <div class="node legal-hist">
+      <div class="name">Christopher Melchert</div>
+      <div class="dates">b. ~1960 · Oxford</div>
+      <div class="role">Islamic Law / Hadith Canonisation Scholar</div>
+      <div class="note">See also Section III. Currently at Oxford; represents the mainstream critical Islamic legal studies tradition in Britain; Ahmad ibn Hanbal (2006); The Formation of the Sunni Schools of Law (1997). His work traces how the hadith corpus was shaped by and integrated into the formation of Sunni legal schools in the 3rd–4th centuries AH.</div>
+    </div>
+  </div>
+
+  <!-- Powers (contemporary) -->
+  <div class="child-col">
+    <div class="node legal-hist">
+      <div class="name">David S. Powers</div>
+      <div class="dates">b. ~1950 · Cornell</div>
+      <div class="role">Islamic Law / HCM Case-Study Analyst</div>
+      <div class="note">See also Section III. Zaid (2014): combined source criticism, Quranic analysis, and hadith criticism to reconstruct the story of the Prophet's adopted son; demonstrates HCM's analytical power when applied to well-defined, specific hadith families. Represents the case-study approach to HCM as opposed to the corpus-wide analysis of Schacht or the isnād-mapping of Juynboll.</div>
+    </div>
+  </div>
+
+</div><!-- /Section VI children-row -->
+
+</div><!-- /tree-grid -->
+</div><!-- /wide -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     CROSS-LINKS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="cross-links">
+  <h2>Notable Cross-Branch Connections, Debates &amp; Intellectual Debts</h2>
+  <ul>
+    <li><strong>Wellhausen's Documentary Hypothesis → Schacht's "common link" theory</strong>: Schacht's central mechanism — that later jurists "projected back" their own opinions under the Prophet's name — is Wellhausen's biblical source-critical concept of anachronistic insertion applied to the hadith corpus. The methodological DNA of HCM Hadith studies is biblical HCM.</li>
+
+    <li><strong>Sprenger's "common transmitter" observation → Schacht's systematised "common link" theory</strong>: Sprenger noticed in the 1860s that the same transmitter names repeatedly appear as pivotal nodes in isnād chains; Schacht in 1950 turned this observation into the rigorous analytical theory that the common link represents the actual point at which a tradition entered wide circulation.</li>
+
+    <li><strong>Goldziher ↔ Schacht</strong>: Schacht's Origins opens with an explicit acknowledgement of Goldziher; where Goldziher demonstrated the phenomenon of hadith fabrication across the entire corpus, Schacht systematised it into a general causal theory for legal hadith origins specifically. Two books, one intellectual programme.</li>
+
+    <li><strong>Abbott + Sezgin ↔ Schacht</strong>: The two major empirical challenges to Schacht came from opposite directions — Abbott from papyrology (earliest surviving physical documents) and Sezgin from manuscript bibliography (comprehensive survey of the Arabic written tradition). Both independently arrived at the same conclusion: significant written hadith transmission predating the 2nd century AH that Schacht's theory said could not exist. Motzki then synthesised their findings into the ICMA programme.</li>
+
+    <li><strong>Wansbrough → Crone / Cook → Hagarism → revisionist consensus</strong>: The SOAS school Wansbrough created did not survive intact: Crone and Cook later distanced themselves from Hagarism's most radical claims. Cook's later work (Forbidding Wrong in Islam, 2003) uses far more balanced source methodology than his 1977 revisionism. But the revisionist scepticism about Islamic canonical narratives became a permanent part of the field's methodological toolkit.</li>
+
+    <li><strong>Motzki ↔ Juynboll</strong>: Motzki's ICMA was developed partly as a critique of Juynboll — Juynboll's isnād-only common link analysis was shown by Motzki to be blind to genuine pre-common-link transmission that becomes visible only when matn variation is systematically mapped alongside the isnād data. The debate between them defines the current methodological frontier in technical hadith studies.</li>
+
+    <li><strong>Schoeler's "hypomnema" model — the bridge position</strong>: Schoeler's oral-written transmission model is the most widely accepted current synthesis between Schacht's late-writing scepticism and Sezgin's early-writing rehabilitation: scholars used written notes (hypomnemata) to support oral memory from the 1st century AH, but did not formally publish these as written texts (ekdosis) until the 2nd century AH — explaining both the papyrological evidence Abbott and Sezgin marshalled and the oral-dominated character of the earliest isnād traditions Schacht identified.</li>
+
+    <li><strong>Noth/Conrad topos method ↔ ICMA</strong>: The Noth/Conrad topos method identifies literary stereotypes in Islamic historiography to detect compositional (as opposed to independent) source relationships. Motzki's ICMA identifies textual variation patterns in hadith isnāds and matns to detect genuine early transmission. They are parallel critical tools for different genres of the Islamic textual tradition, and Robinson's work brings both to bear simultaneously.</li>
+
+    <li><strong>Rubin (form criticism) + Görke (ICMA) on the Sīra</strong>: Rubin's Eye of the Beholder (1995) demonstrated that Muhammad's biography is structured by biblical typology and prophetic archetypes. Görke then applied ICMA to individual Sīra traditions to identify which specific biographical accounts have isnād-cum-matn structures consistent with genuine early transmission. Their complementary methods — form criticism and ICMA — together constitute the state of the art in critical Sīra studies.</li>
+
+    <li><strong>Hallaq vs. Schacht — the most technically argued internal HCM debate</strong>: Hallaq is neither a Muslim traditionalist defending the hadith nor a Wansbrough-style radical sceptic. He used Schacht's own methodology more carefully against Schacht's conclusions — demonstrating that Schacht had misread the 1st-century sources' role of the Prophet's Sunna in early jurisprudence. This debate remains unresolved and is central to the field's current self-understanding.</li>
+
+    <li><strong>Sadeghi's stochastic modelling — the computational future of ICMA</strong>: Sadeghi's probabilistic approach to transmission reliability extends what ICMA achieves qualitatively (distinguishing genuine early transmission from later fabrication) into a formal mathematical framework. His methods applied to the Sanaa palimpsest represent the frontier of quantitative HCM — the same turn toward computational methods that is transforming genetics, textual criticism, and historical linguistics simultaneously.</li>
+
+    <li><strong>Brown — synthesising the entire tradition for a new generation</strong>: Brown's Hadith (2009) and Canonization (2007) are the texts through which most current students and scholars encounter the HCM tradition as a whole; he serves as the synthetic synthesiser who makes the field accessible without sacrificing critical rigour, in a role comparable to what Julian Huxley's Evolution: The Modern Synthesis did for the biological Modern Synthesis — bringing the technical scholarly debates to a broad audience in coherent form.</li>
+  </ul>
+</div>
+
+</body>
+</html>
