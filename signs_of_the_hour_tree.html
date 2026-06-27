@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Signs of the Hour — Lineage Tree</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #ffffff;
+      --surface:   #f6f8fa;
+      --ink:       #1c2128;
+      --muted:     #57606a;
+      --line:      #99a0a8;
+      --accent:    #1c6b3f;
+      --rule:      #d0d7de;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 30px 20px 60px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+      max-width: 920px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.4;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      justify-content: center;
+      margin-bottom: 18px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .disclaimer {
+      max-width: 920px;
+      margin: 0 auto 30px;
+      padding: 12px 18px;
+      background: #f3f8f4;
+      border: 1px solid #cfe6d6;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: #3d544a;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* ── Tree structure ── */
+    .node-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .node {
+      border-radius: 8px;
+      padding: 9px 14px;
+      min-width: 210px;
+      max-width: 300px;
+      text-align: center;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      cursor: default;
+    }
+    .node .name  { font-weight: 700; font-size: 0.92rem; color: var(--ink); }
+    .node .dates { font-size: 0.73rem; color: var(--muted); margin-top: 1px; }
+    .node .role  { font-size: 0.76rem; font-style: italic; margin-top: 3px; color: #3d444d; }
+    .node .note  { font-size: 0.71rem; margin-top: 4px; color: #424a53; line-height: 1.32; }
+
+    /* ── Connectors ── */
+    .connector-down { width: 2px; background: var(--line); height: 22px; flex-shrink: 0; }
+    .connector-up   { width: 2px; background: var(--line); height: 22px; flex-shrink: 0; }
+    .children-row   { display: flex; align-items: flex-start; gap: 12px; }
+    .child-col      { display: flex; flex-direction: column; align-items: center; }
+    .h-bar          { height: 2px; background: var(--line); width: 100%; }
+
+    /* ── Category colour classes (light tints + coloured border) ── */
+    .passed       { background: #eaf6ec; border-color: #1a7f37; }  /* Minor signs already passed */
+    .unfolding    { background: #e9f7f9; border-color: #0a7c8a; }  /* Minor signs unfolding */
+    .moral        { background: #fff8e1; border-color: #9a6700; }  /* Moral / social decline signs */
+    .later-minor  { background: #fff4e6; border-color: #bc4c00; }  /* Later minor signs */
+    .threshold    { background: #fdeef4; border-color: #bf3989; }  /* Threshold / transitional signs */
+    .major-early  { background: #f3edff; border-color: #6639ba; }  /* Major signs — early */
+    .major-cosmic { background: #fdecea; border-color: #cf222e; }  /* Major signs — cosmic upheaval */
+    .major-final  { background: #eef1f5; border-color: #4c5560; }  /* Major signs — final sequence */
+    .root         { background: #eef4ff; border-color: #0550ae; }  /* The Hour itself / framing */
+
+    /* ── Section labels ── */
+    .section-label {
+      margin: 44px 0 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-bottom: 1.5px solid var(--rule);
+      padding-bottom: 6px;
+      width: 100%;
+      max-width: 1800px;
+    }
+
+    /* ── Scroll container (screen only) ── */
+    .wide { overflow-x: auto; width: 100%; }
+    .tree-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 1200px;
+      padding: 10px 20px 20px;
+    }
+
+    /* ── Cross-links panel ── */
+    .cross-links {
+      max-width: 1000px;
+      margin: 36px auto 0;
+      padding: 20px 24px;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+    }
+    .cross-links h2 { color: var(--accent); font-size: 1rem; margin-bottom: 12px; }
+    .cross-links ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+    .cross-links ul li::before { content: "↔ "; color: var(--muted); }
+    .cross-links ul li { font-size: 0.82rem; color: #424a53; line-height: 1.45; }
+    strong { color: var(--ink); }
+
+    /* ── Print toolbar (screen only) ── */
+    #print-bar {
+      position: fixed;
+      top: 18px; right: 22px;
+      z-index: 100;
+      display: flex; align-items: center; gap: 8px;
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 30px;
+      padding: 7px 14px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.14);
+    }
+    #print-bar button {
+      border: 1.5px solid var(--rule);
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    #print-bar button.ghost {
+      background: #fff;
+      color: var(--accent);
+    }
+    #print-bar button:active { transform: scale(0.96); }
+
+    .hint {
+      text-align: center;
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       PRINT STYLES
+       ═══════════════════════════════════════════════ */
+    @media print {
+      @page {
+        size: A3 landscape;
+        margin: 12mm;
+      }
+      body {
+        padding: 0;
+        background: #fff;
+        font-size: 10px;
+      }
+      #print-bar, .hint { display: none !important; }
+
+      .wide { overflow: visible !important; }
+      .tree-grid { min-width: 0 !important; width: 100% !important; padding: 0; }
+
+      h1 { font-size: 18pt; margin-bottom: 4px; }
+      .subtitle { font-size: 9pt; margin-bottom: 10px; }
+      .disclaimer { font-size: 8pt; margin-bottom: 16px; }
+      .legend { margin-bottom: 14px; gap: 4px 16px; }
+      .legend-item { font-size: 7pt; }
+
+      .node { break-inside: avoid; }
+      .child-col, .children-row { break-inside: avoid; }
+      .cross-links { break-inside: avoid; }
+
+      .section-label {
+        break-before: page;
+        font-size: 11pt;
+        margin: 0 0 14px;
+      }
+      .section-label.first { break-before: avoid; }
+
+      .cross-links { break-before: page; }
+
+      .node, .cross-links, .legend-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ PRINT TOOLBAR (screen only) ═══ -->
+<div id="print-bar">
+  <button onclick="window.print()">🖨 Print / Save PDF</button>
+  <button class="ghost" onclick="document.body.classList.toggle('compact')">Toggle compact</button>
+</div>
+
+<h1>Signs of the Hour (Ashrāṭ as-Sāʿah) — A Chronological Tree</h1>
+<p class="subtitle">
+  The portents of the Day of Judgement in the Sunni Islamic tradition, arranged in their commonly understood order —
+  the <strong>minor signs</strong> (aṣ-ṣughrā) first, beginning in the Prophet's own lifetime and unfolding through history,
+  leading to the <strong>major signs</strong> (al-kubrā), which follow one another in close succession at the very end of time.
+  Designed for printing — use <strong>A3 landscape</strong>, or Save as PDF.
+</p>
+
+<div class="disclaimer">
+  This chart is a study aid summarising the traditional accounts drawn from the Qurʾān and the ḥadīth collections
+  (especially Ṣaḥīḥ al-Bukhārī and Ṣaḥīḥ Muslim). The <em>exact</em> timing and order — particularly among the minor signs —
+  is a matter of scholarly interpretation (ijtihād), not certainty; only Allah knows the Hour (Qurʾān 7:187). The grouping
+  below reflects when each sign is generally said to <em>begin</em> to appear.
+</div>
+
+<p class="hint">Tip: For the cleanest printout choose “Background graphics” ON and “A3 / Landscape” in your browser’s print dialog.</p>
+
+<!-- ═══════════════ LEGEND ═══════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#0550ae"></div>The Hour &amp; its Framing</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a7f37"></div>Minor Signs — Already Passed</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0a7c8a"></div>Minor Signs — Unfolding Now</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9a6700"></div>Moral &amp; Social Decline</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bc4c00"></div>Later Minor Signs</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bf3989"></div>Threshold / Transitional</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6639ba"></div>Major Signs — Early</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#cf222e"></div>Major Signs — Cosmic Upheaval</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4c5560"></div>Major Signs — Final Sequence</div>
+</div>
+
+<div class="wide" id="wide-scroller">
+<div class="tree-grid">
+
+<!-- ═══════════════════════════════════════════════════════════
+     I · MINOR SIGNS ALREADY PASSED (7th c. CE onward)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label first">I · Minor Signs Already Passed — From the Prophet's Lifetime Onward</div>
+
+<div class="children-row">
+
+  <!-- ── The greatest opening sign ── -->
+  <div class="child-col">
+    <div class="node root" style="min-width:285px; border-width:2px">
+      <div class="name">The Sending of the Prophet ﷺ ★</div>
+      <div class="dates">610 – 632 CE · Mecca &amp; Medina</div>
+      <div class="role">The First &amp; Foremost Sign</div>
+      <div class="note">The Prophet Muhammad ﷺ said, "I was sent, and the Hour, like these two" — holding up two fingers (Bukhārī, Muslim). His prophethood, being the final messenger, is itself the opening sign that the end of time has drawn near. Every later sign descends from this point.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node passed">
+          <div class="name">Death of the Prophet ﷺ</div>
+          <div class="dates">11 AH / 632 CE</div>
+          <div class="role">Foretold Sign</div>
+          <div class="note">Named explicitly among the signs in the ḥadīth of ʿAwf ibn Mālik (Bukhārī): "Count six signs before the Hour: the first is my death."</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node passed">
+          <div class="name">Conquest of Jerusalem</div>
+          <div class="dates">16 AH / 637 CE</div>
+          <div class="role">Foretold Sign</div>
+          <div class="note">The second of the six signs in the same ḥadīth — the opening of Bayt al-Maqdis (Jerusalem) under ʿUmar ibn al-Khaṭṭāb.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node passed">
+          <div class="name">The Plague of ʿAmwās</div>
+          <div class="dates">18 AH / 639 CE</div>
+          <div class="role">Foretold Sign</div>
+          <div class="note">A mass mortality ("like the murrain of sheep") foretold as the third sign; a great plague struck Syria at ʿAmwās in the time of the Companions.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node passed">
+          <div class="name">Civil Strife &amp; Wealth</div>
+          <div class="dates">35 AH onward</div>
+          <div class="role">Fitan &amp; Surplus</div>
+          <div class="note">The assassination of ʿUthmān, the first fitna, and wealth so abundant that "a man given 100 dīnār is still discontent" — further signs from the ḥadīth of the six.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── False claimants ── -->
+  <div class="child-col">
+    <div class="node passed" style="min-width:255px; border-width:2px">
+      <div class="name">The Liars Claiming Prophethood</div>
+      <div class="dates">11 AH onward</div>
+      <div class="role">~30 False Prophets</div>
+      <div class="note">"The Hour will not come until about thirty liars, each claiming to be a messenger of Allah, appear" (Bukhārī, Muslim). Began with Musaylimah and al-Aswad in the Prophet's own time and continued through history.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node passed">
+          <div class="name">Loss of the Trustworthy &amp; Knowledge</div>
+          <div class="dates">Early generations onward</div>
+          <div class="role">Removal of ʿIlm</div>
+          <div class="note">Knowledge is taken by the death of the scholars; ignorant leaders give verdicts without knowledge, "straying and leading others astray" (Bukhārī).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node passed">
+          <div class="name">Fire of the Ḥijāz</div>
+          <div class="dates">654 AH / 1256 CE</div>
+          <div class="role">Foretold Sign</div>
+          <div class="note">"Fire will come out of the land of Ḥijāz which will light up the necks of the camels in Buṣrā" (Bukhārī, Muslim) — historically identified with the volcanic eruption near Medina in 1256 CE.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     II · MINOR SIGNS UNFOLDING — MORAL & SOCIAL DECLINE
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">II · Minor Signs Unfolding — Moral &amp; Social Decline</div>
+
+<div class="children-row">
+
+  <!-- ── Loss of trust ── -->
+  <div class="child-col">
+    <div class="node moral" style="min-width:270px; border-width:2px">
+      <div class="name">When Trust (Amānah) is Lost ★</div>
+      <div class="dates">Ongoing</div>
+      <div class="role">Affairs Given to the Unworthy</div>
+      <div class="note">A Bedouin asked when the Hour would be; the Prophet ﷺ said, "When the trust is lost, await the Hour" — "when authority is given to those unfit for it" (Bukhārī). The master theme uniting the social signs of decline below.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node moral">
+          <div class="name">The Slave-Woman's Master</div>
+          <div class="dates">Ongoing</div>
+          <div class="role">Ḥadīth of Jibrīl</div>
+          <div class="note">"The slave-woman will give birth to her mistress/master" — variously read as the collapse of family ties, children disrespecting parents, or vast social reversal (Muslim).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node moral">
+          <div class="name">Barefoot Shepherds Build High</div>
+          <div class="dates">Ongoing</div>
+          <div class="role">Ḥadīth of Jibrīl</div>
+          <div class="note">"The barefoot, naked, destitute shepherds competing in constructing tall buildings" — the poor becoming rich and vying in skyscrapers (Bukhārī, Muslim).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node moral">
+          <div class="name">Spread of Riba, Zinā &amp; Wine</div>
+          <div class="dates">Ongoing</div>
+          <div class="role">Open Sin</div>
+          <div class="note">Usury becomes widespread, adultery and intoxicants are openly practised and even named by other names — recurring portents in the ḥadīth literature.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node moral">
+          <div class="name">Music, Killing &amp; Time Contracting</div>
+          <div class="dates">Ongoing</div>
+          <div class="role">Disorder</div>
+          <div class="note">Prevalence of singing/instruments, frequent killing (al-harj) where killer and killed know not why, and "time passing quickly" so a year feels like a month (Bukhārī, Aḥmad).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Religion weakens ── -->
+  <div class="child-col">
+    <div class="node unfolding" style="min-width:255px; border-width:2px">
+      <div class="name">Weakening of Religion ★</div>
+      <div class="dates">Ongoing</div>
+      <div class="role">Faith Held Like Hot Coal</div>
+      <div class="note">"There will come a time when holding to one's religion is like holding a burning coal" (Tirmidhī). Islam becomes strange again, as it began — practised firmly by few.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node unfolding">
+          <div class="name">Greeting Only the Known</div>
+          <div class="dates">Ongoing</div>
+          <div class="role">Erosion of Brotherhood</div>
+          <div class="note">"A man will greet (with salām) only those he knows" — the loss of universal Muslim brotherhood and trade overtaking ties of kinship (Aḥmad).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node unfolding">
+          <div class="name">Truthful Disbelieved, Liar Believed</div>
+          <div class="dates">Ongoing</div>
+          <div class="role">The Years of Deceit</div>
+          <div class="note">"Years of deceit in which the truthful is disbelieved, the liar believed, the trustworthy called a traitor, and the treacherous trusted; and the Ruwaybiḍah will speak" — the foolish nobody addressing public affairs (Ibn Mājah, Aḥmad).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     III · LATER MINOR SIGNS — APPROACHING THE END
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">III · Later Minor Signs — Approaching the End</div>
+
+<div class="children-row">
+
+  <!-- ── Geopolitical / great events ── -->
+  <div class="child-col">
+    <div class="node later-minor" style="min-width:270px; border-width:2px">
+      <div class="name">Great Wars &amp; Upheavals ★</div>
+      <div class="dates">Approaching the End</div>
+      <div class="role">Fitan Before the Major Signs</div>
+      <div class="note">A cluster of momentous events the ḥadīths place near (but before) the major signs — widespread tribulations that prepare the stage for the Mahdī and Dajjāl.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node later-minor">
+          <div class="name">Euphrates Uncovers a Mountain of Gold</div>
+          <div class="dates">Future</div>
+          <div class="role">Bukhārī &amp; Muslim</div>
+          <div class="note">"The Hour will not come until the Euphrates uncovers a mountain of gold over which people fight, ninety-nine of every hundred dying." A warning not to take from it.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node later-minor">
+          <div class="name">Arabia: Meadows &amp; Rivers Again</div>
+          <div class="dates">Future</div>
+          <div class="role">Ṣaḥīḥ Muslim</div>
+          <div class="note">"The Hour will not come until the land of the Arabs once more becomes meadows and rivers" — a reversal of the desert.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node later-minor">
+          <div class="name">Conquest of Constantinople / Rome</div>
+          <div class="dates">Future (near the Dajjāl)</div>
+          <div class="role">A Final Great Conquest</div>
+          <div class="note">A great army of believers conquers the city by takbīr, not weapons, just before the appearance of the Dajjāl (Muslim) — distinguished by scholars from the 1453 conquest.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node later-minor">
+          <div class="name">The Great Battle (al-Malḥamah)</div>
+          <div class="dates">Future (near the Dajjāl)</div>
+          <div class="role">Massive War in al-Shām</div>
+          <div class="note">A tremendous war and the truce-then-betrayal foretold in Muslim, immediately preceding the emergence of the Dajjāl — the hinge between the minor and major signs.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Threshold signs ── -->
+  <div class="child-col">
+    <div class="node threshold" style="min-width:255px; border-width:2px">
+      <div class="name">Signs at the Threshold ★</div>
+      <div class="dates">Just Before the Major Signs</div>
+      <div class="role">The Last of the Minor Signs</div>
+      <div class="note">Portents the tradition places right at the brink — the final indicators that the major signs are about to begin in succession.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node threshold">
+          <div class="name">Abundance of Wealth — No Takers</div>
+          <div class="dates">Future</div>
+          <div class="role">Ṣaḥīḥ Muslim</div>
+          <div class="note">Wealth so abundant that a man offered charity finds no one to accept it — associated with the just rule near the end (and the time of ʿĪsā).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node threshold">
+          <div class="name">Speaking Inanimate Objects</div>
+          <div class="dates">Future</div>
+          <div class="role">Tirmidhī</div>
+          <div class="note">"A man's whip or the thong of his sandal will speak to him, and his thigh will tell him what his people did after him" — a sign of nearness often linked to later technology by commentators.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     IV · MAJOR SIGNS — THE BEGINNING (al-Kubrā)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">IV · Major Signs (al-Kubrā) — The Beginning</div>
+
+<div class="children-row">
+
+  <!-- ── MAHDI → DAJJAL → ISA ── -->
+  <div class="child-col">
+    <div class="node major-early" style="min-width:285px; border-width:2px">
+      <div class="name">Imām al-Mahdī ★</div>
+      <div class="dates">First of the great figures</div>
+      <div class="role">The Rightly-Guided Leader</div>
+      <div class="note">A man from the Prophet's family (descended from Fāṭimah), named Muhammad ibn ʿAbdillāh, who fills the earth with justice as it was filled with injustice, ruling for about seven years (Abū Dāwūd, Tirmidhī). His era overlaps the emergence of the Dajjāl and the descent of ʿĪsā. (Reported in Sunni sources; the Mahdī also holds central but differently-detailed importance in Shīʿī thought.)</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node major-cosmic" style="border-width:2px">
+          <div class="name">Al-Masīḥ ad-Dajjāl ★</div>
+          <div class="dates">The greatest trial</div>
+          <div class="role">The False Messiah / Antichrist</div>
+          <div class="note">A one-eyed deceiver with "Kāfir" written between his eyes, who claims divinity and roams the earth in forty days (one like a year, one like a month, one like a week), bringing false "paradise" and "hell." The greatest fitna since Adam; barred only from Mecca and Medina (Muslim). Every prophet warned of him.</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node major-early" style="border-width:2px">
+          <div class="name">Descent of ʿĪsā (Jesus) ﷺ ★</div>
+          <div class="dates">During the Dajjāl's reign</div>
+          <div class="role">The Return of the Messiah</div>
+          <div class="note">Jesus son of Mary descends by the white minaret east of Damascus, breaks the cross, abolishes the jizyah, prays behind the Mahdī, and kills the Dajjāl at the gate of Ludd (Lod). He rules with justice; wealth overflows and prostration becomes better than the world (Bukhārī, Muslim).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     V · MAJOR SIGNS — COSMIC UPHEAVAL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">V · Major Signs — Cosmic Upheaval</div>
+
+<div class="children-row">
+
+  <!-- ── GOG & MAGOG ── -->
+  <div class="child-col">
+    <div class="node major-cosmic" style="min-width:285px; border-width:2px">
+      <div class="name">Yaʾjūj wa Maʾjūj (Gog &amp; Magog) ★</div>
+      <div class="dates">In the time of ʿĪsā ﷺ</div>
+      <div class="role">The Released Hordes</div>
+      <div class="note">After the Dajjāl's death, the barrier of Dhū al-Qarnayn (Qurʾān 18:94–99, 21:96) is breached and Gog and Magog pour forth "from every height," drinking lakes dry and spreading corruption. ʿĪsā and the believers take refuge on Mount Ṭūr; Allah destroys the hordes with worms in their necks, and birds clear the earth of them (Muslim).</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node major-cosmic">
+          <div class="name">The Three Landslides (Khasf)</div>
+          <div class="dates">Among the ten major signs</div>
+          <div class="role">Earth Swallowing</div>
+          <div class="note">Three great sinkings of the earth — one in the East, one in the West, and one in the Arabian Peninsula — listed among the ten major signs in the ḥadīth of Ḥudhayfah ibn Asīd (Muslim).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node major-final">
+          <div class="name">The Smoke (ad-Dukhān)</div>
+          <div class="dates">Among the ten major signs</div>
+          <div class="role">Qurʾān 44:10–11</div>
+          <div class="note">"Watch for the Day when the sky brings a visible smoke covering the people — a painful punishment." Counted among the ten major signs; it afflicts the whole earth, the believer touched as by a cold, the disbeliever overwhelmed.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     VI · MAJOR SIGNS — THE FINAL SEQUENCE
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section-label">VI · Major Signs — The Final Sequence &amp; the Hour</div>
+
+<div class="children-row">
+
+  <!-- ── SUN FROM WEST ── -->
+  <div class="child-col">
+    <div class="node major-final" style="min-width:280px; border-width:2px">
+      <div class="name">Sunrise From the West ★</div>
+      <div class="dates">The door of repentance closes</div>
+      <div class="role">The Sun Rising From its Setting-place</div>
+      <div class="note">"The Hour will not come until the sun rises from the west; when people see it, all will believe — but on that Day, faith will not benefit a soul that did not believe before" (Bukhārī, Muslim; cf. Qurʾān 6:158). After this, the gate of repentance (tawbah) is shut forever.</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node major-final">
+          <div class="name">The Beast of the Earth (ad-Dābbah)</div>
+          <div class="dates">Near the sunrise from the west</div>
+          <div class="role">Qurʾān 27:82</div>
+          <div class="note">"We will bring forth from the earth a Beast that will speak to them" — it marks the faces of believer and disbeliever, distinguishing them. Said in the ḥadīth to emerge close in time to the sun's rising from the west (Muslim).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node major-final" style="border-width:2px">
+          <div class="name">The Fire That Gathers Mankind ★</div>
+          <div class="dates">The last of the ten signs</div>
+          <div class="role">From Yemen / ʿAdan</div>
+          <div class="note">"The last of the signs is a fire that comes out of Yemen (from the depths of ʿAdan) and drives the people to their place of gathering (al-maḥshar)" — the final sign in the list of Ḥudhayfah ibn Asīd (Muslim).</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node root" style="border-width:2px">
+          <div class="name">The Blowing of the Trumpet ★</div>
+          <div class="dates">The Hour itself</div>
+          <div class="role">Isrāfīl &amp; the Ṣūr</div>
+          <div class="note">The Hour arrives: Isrāfīl blows the Trumpet (Qurʾān 39:68, 69:13). At the first blast all in the heavens and earth fall dead; at the second, all are resurrected for the Day of Judgement. Beyond this lies not a "sign" but the Reckoning itself.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /tree-grid -->
+</div><!-- /wide -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CROSS-LINKS — threads connecting the signs
+     ═══════════════════════════════════════════════════════════ -->
+<div class="cross-links">
+  <h2>Cross-Links — How the Signs Relate</h2>
+  <ul>
+    <li><strong>The Prophet ﷺ "and the Hour like these two":</strong> his sending is the first sign, so the entire chain of minor signs is reckoned from his lifetime onward.</li>
+    <li><strong>Minor → Major in order of magnitude:</strong> the tradition consistently teaches that the many minor signs (ṣughrā) appear gradually over history, while the major signs (kubrā) come close together at the end "like beads of a necklace whose string is cut."</li>
+    <li><strong>Moral decline ↔ loss of trust (amānah):</strong> nearly all the social signs — unfit leaders, open sin, the disbelieved-truthful, the speaking Ruwaybiḍah — are facets of the single ḥadīth "when trust is lost, await the Hour."</li>
+    <li><strong>The Great Battle (Malḥamah) → the Dajjāl:</strong> the wars in al-Shām and the conquest of Constantinople are the last minor signs, forming the immediate bridge into the major signs.</li>
+    <li><strong>Mahdī ↔ ʿĪsā ↔ Dajjāl — one interlocking drama:</strong> the Mahdī leads, ʿĪsā descends during the Dajjāl's reign and prays behind the Mahdī, and it is ʿĪsā who kills the Dajjāl at Ludd.</li>
+    <li><strong>Dajjāl's death → release of Gog &amp; Magog:</strong> the breaching of Dhū al-Qarnayn's barrier follows directly upon the Dajjāl's defeat, during the rule of ʿĪsā.</li>
+    <li><strong>The "Ten Major Signs" of Ḥudhayfah ibn Asīd (Muslim):</strong> the Smoke, the Dajjāl, the Beast, sunrise from the west, the descent of ʿĪsā, Gog &amp; Magog, the three landslides (East, West, Arabia), and the Fire — the canonical checklist this chart follows.</li>
+    <li><strong>Sunrise from the west → the closing of repentance:</strong> this cosmic reversal ends the age of accepted faith; thereafter belief no longer benefits the one who waited.</li>
+    <li><strong>The Beast ↔ the sun from the west:</strong> the ḥadīth pairs these two as near-simultaneous, "whichever comes first, the other follows closely."</li>
+    <li><strong>The Fire of gathering → the Trumpet:</strong> the last of the ten signs herds humanity to the place of assembly, after which Isrāfīl's Trumpet ends the worldly order and opens the Resurrection.</li>
+    <li><strong>Qurʾān ↔ ḥadīth:</strong> several major signs are named in the Qurʾān (the Smoke 44:10, the Beast 27:82, Gog &amp; Magog 18 &amp; 21, the sun's belated faith 6:158, the Trumpet 39:68) and detailed in the Sunnah.</li>
+    <li><strong>"Only Allah knows the Hour" (7:187, 31:34):</strong> the signs announce nearness, never a date — the framing principle for reading this entire chart.</li>
+  </ul>
+</div>
+
+<script>
+  // Press "P" (or "p") to open the print dialog.
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      window.print();
+    }
+  });
+</script>
+
+</body>
+</html>
