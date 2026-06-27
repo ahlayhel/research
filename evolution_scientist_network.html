@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Theory of Evolution — Scientist Network</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 12px 22px 6px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #21262d;
+    }
+    h1 { font-size: 1.25rem; color: #58a6ff; }
+    .subtitle { font-size: 0.73rem; color: #8b949e; margin-top: 2px; }
+
+    /* ── Controls ── */
+    #controls {
+      padding: 7px 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 14px;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .ctrl-label { font-size: 0.7rem; color: #8b949e; margin-right: 2px; }
+    .filter-btn {
+      padding: 3px 11px;
+      border-radius: 20px;
+      border: 1.5px solid;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.7rem;
+      color: #c9d1d9;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-btn.active { color: #0d1117 !important; }
+    .filter-btn[data-era="all"].active       { background:#8b949e; border-color:#8b949e; }
+    .filter-btn[data-era="precursor"].active { background:#c9843e; border-color:#c9843e; }
+    .filter-btn[data-era="darwin"].active    { background:#2ea043; border-color:#2ea043; }
+    .filter-btn[data-era="genetics"].active  { background:#388bfd; border-color:#388bfd; }
+    .filter-btn[data-era="synthesis"].active { background:#bc8cff; border-color:#bc8cff; }
+    .filter-btn[data-era="molecular"].active { background:#e3b341; border-color:#e3b341; }
+    .filter-btn[data-era="evodevo"].active   { background:#76e3ea; border-color:#76e3ea; }
+    .filter-btn[data-era="genomics"].active  { background:#db61a2; border-color:#db61a2; }
+
+    /* ── Link legend ── */
+    .link-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      padding: 5px 22px 6px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .ll-item { display:flex; align-items:center; gap:6px; font-size:0.68rem; color:#8b949e; }
+    .ll-line  { width:28px; height:3px; border-radius:2px; }
+
+    /* ── Graph ── */
+    #graph-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    svg { width:100%; height:100%; }
+
+    /* ── Link styles ── */
+    .link { fill: none; }
+    .link.mentor    { stroke: #58a6ff; stroke-width: 2.6; }
+    .link.colleague { stroke: #56d364; stroke-width: 2.0; }
+    .link.inspired  { stroke: #6e7681; stroke-width: 1.2; }
+    .link.debated   { stroke: #f78166; stroke-width: 2.0; stroke-dasharray: 7,4; }
+
+    /* ── Node styles ── */
+    .node { cursor: pointer; }
+    .node circle {
+      stroke-width: 2.2;
+      transition: filter 0.12s;
+    }
+    .node:hover circle { filter: brightness(1.6); }
+    .node .n-label {
+      font-size: 9px;
+      fill: #e6edf3;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      font-weight: 600;
+    }
+    .node .n-dates {
+      font-size: 7.5px;
+      fill: #6e7681;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    /* Era fill/stroke pairs */
+    .e-precursor circle { stroke: #c9843e; fill: #1e1308; }
+    .e-darwin    circle { stroke: #2ea043; fill: #0e1e10; }
+    .e-genetics  circle { stroke: #388bfd; fill: #0a1220; }
+    .e-synthesis circle { stroke: #bc8cff; fill: #1a0d2e; }
+    .e-molecular circle { stroke: #e3b341; fill: #1e1b08; }
+    .e-evodevo   circle { stroke: #76e3ea; fill: #071e20; }
+    .e-genomics  circle { stroke: #db61a2; fill: #1a0812; }
+
+    /* ── Info panel ── */
+    #info-panel {
+      position: absolute;
+      top: 0; right: 0;
+      width: 310px;
+      max-height: 100%;
+      background: #161b22;
+      border-left: 1px solid #21262d;
+      padding: 16px;
+      overflow-y: auto;
+      display: none;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      z-index: 20;
+    }
+    #info-panel.vis { display: block; }
+    #info-panel h3   { color: #58a6ff; font-size: 1rem; margin-bottom: 1px; padding-right: 20px; }
+    .ip-full         { color: #c9d1d9; font-size: 0.78rem; font-style: italic; }
+    .ip-dates        { color: #e3b341; font-weight: 700; font-size: 0.82rem; margin: 4px 0 1px; }
+    .ip-era          { font-size: 0.72rem; margin-bottom: 2px; }
+    .ip-specialty    { color: #56d364; font-style: italic; margin-bottom: 8px; font-size: 0.78rem; }
+    .ip-note         { color: #c9d1d9; margin-bottom: 14px; }
+    .ip-conn-title   { color: #58a6ff; font-weight: 700; margin-bottom: 7px; }
+    .ip-conn ul      { list-style: none; }
+    .ip-conn li      { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #21262d; }
+    .ip-conn li:last-child { border-bottom: none; }
+    .ip-conn .ct     { font-size: 0.69rem; font-style: italic; }
+    .ip-conn .ct.mentor    { color: #58a6ff; }
+    .ip-conn .ct.colleague { color: #56d364; }
+    .ip-conn .ct.inspired  { color: #8b949e; }
+    .ip-conn .ct.debated   { color: #f78166; }
+    #close-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: none; border: none; cursor: pointer;
+      color: #8b949e; font-size: 1rem;
+    }
+    #close-btn:hover { color: #e6edf3; }
+
+    /* ── Tooltip ── */
+    #tip {
+      position: absolute;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.74rem;
+      color: #c9d1d9;
+      pointer-events: none;
+      display: none;
+      max-width: 240px;
+      line-height: 1.45;
+      z-index: 30;
+    }
+
+    .instructions {
+      position: absolute;
+      bottom: 8px; left: 12px;
+      font-size: 0.65rem;
+      color: #21262d;
+      pointer-events: none;
+    }
+
+    /* ── Era badge in panel ── */
+    .era-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Theory of Evolution — Scientist Network (~60 figures, 7 Eras)</h1>
+  <p class="subtitle">Blue lines = mentorship · Green = close collaboration · Grey = intellectual influence · Red dashed = debate/opposition · Click any node for full profile · Drag · Scroll to zoom</p>
+</header>
+
+<div id="controls">
+  <span class="ctrl-label">Filter era:</span>
+  <button class="filter-btn active" data-era="all"       style="border-color:#8b949e">All</button>
+  <button class="filter-btn"        data-era="precursor" style="border-color:#c9843e">Pre-Darwin (–1858)</button>
+  <button class="filter-btn"        data-era="darwin"    style="border-color:#2ea043">Darwin's Circle (1859–1899)</button>
+  <button class="filter-btn"        data-era="genetics"  style="border-color:#388bfd">Genetics Revolution (1900–1936)</button>
+  <button class="filter-btn"        data-era="synthesis" style="border-color:#bc8cff">Modern Synthesis (1937–1959)</button>
+  <button class="filter-btn"        data-era="molecular" style="border-color:#e3b341">Molecular &amp; Behavior (1953–1985)</button>
+  <button class="filter-btn"        data-era="evodevo"   style="border-color:#76e3ea">Evo-Devo &amp; Macro (1966–2005)</button>
+  <button class="filter-btn"        data-era="genomics"  style="border-color:#db61a2">Genomics Era (1990–present)</button>
+</div>
+
+<div class="link-legend">
+  <div class="ll-item"><div class="ll-line" style="background:#58a6ff"></div>Direct mentorship (teacher → student)</div>
+  <div class="ll-item"><div class="ll-line" style="background:#56d364"></div>Close collaboration / co-discovery</div>
+  <div class="ll-item"><div class="ll-line" style="background:#6e7681"></div>Documented intellectual influence</div>
+  <div class="ll-item">
+    <svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#f78166" stroke-width="2.2" stroke-dasharray="5,3.5"/></svg>
+    Responded to / debated
+  </div>
+</div>
+
+<div id="graph-container">
+  <svg id="graph"></svg>
+  <div id="info-panel">
+    <button id="close-btn">✕</button>
+    <h3 id="ip-name"></h3>
+    <div class="ip-full"    id="ip-full"></div>
+    <div class="ip-dates"   id="ip-dates"></div>
+    <div id="ip-era-badge"></div>
+    <div class="ip-specialty" id="ip-specialty"></div>
+    <div class="ip-note"    id="ip-note"></div>
+    <div id="ip-conn"></div>
+  </div>
+  <div id="tip"></div>
+  <p class="instructions">Drag nodes · Scroll / pinch to zoom · Click for details</p>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  NODES
+// ═══════════════════════════════════════════════════════════════
+const nodes = [
+
+  // ─── PRE-DARWIN PRECURSORS ───────────────────────────────────
+  { id:"buffon",      name:"Buffon",          full:"Georges-Louis Leclerc, Comte de Buffon",
+    dates:"1707–1788", era:"precursor", specialty:"Natural Historian",
+    note:"Director of Jardin du Roi; his 44-volume Histoire Naturelle was the first systematic natural history. Proposed that species change over geological time and deep Earth history. Patron and direct employer of Lamarck. The first person to treat natural history as a rigorous science divorced from theology.", r:15 },
+
+  { id:"e_darwin",    name:"E. Darwin",        full:"Erasmus Darwin",
+    dates:"1731–1802", era:"precursor", specialty:"Natural Philosopher / Poet",
+    note:"Charles Darwin's grandfather. Zoonomia (1794) proposed that all warm-blooded life descended from one living filament, and that organisms change through use and disuse. These ideas entered Darwin's household as background noise — Charles re-read Zoonomia just before the Beagle voyage.", r:13 },
+
+  { id:"lamarck",     name:"Lamarck",          full:"Jean-Baptiste Lamarck",
+    dates:"1744–1829", era:"precursor", specialty:"Naturalist / Proto-Evolutionist",
+    note:"Philosophie Zoologique (1809): the first systematic theory of biological evolution, including a mechanism (use/disuse and inheritance of acquired characteristics) and a drive toward complexity. Trained under and patronised by Buffon. His mechanism was wrong but his question — how do species change? — was exactly the right one.", r:17 },
+
+  { id:"malthus",     name:"Malthus",          full:"Thomas Robert Malthus",
+    dates:"1766–1834", era:"precursor", specialty:"Economist / Demographer",
+    note:"Essay on the Principle of Population (1798): resources grow arithmetically but population geometrically, causing perpetual struggle. Darwin read it in October 1838 and immediately recognised the mechanism of natural selection: in a world of scarce resources, those best-suited to survive will leave more offspring.", r:16 },
+
+  { id:"cuvier",      name:"Cuvier",           full:"Georges Cuvier",
+    dates:"1769–1832", era:"precursor", specialty:"Comparative Anatomist / Paleontologist",
+    note:"Founded vertebrate paleontology; proved extinction is real by identifying fossil elephants with no living relatives. His catastrophism (periodic mass extinctions wiping the slate clean) was the dominant alternative to evolutionary thinking. Lyell's uniformitarianism was a direct refutation; Darwin's gradualism completed the demolition.", r:15 },
+
+  { id:"lyell",       name:"Lyell",            full:"Charles Lyell",
+    dates:"1797–1875", era:"precursor", specialty:"Geologist",
+    note:"Principles of Geology (1830–33): uniformitarianism — the same slow geological processes operating today shaped Earth's entire history, implying immense deep time. Darwin carried all three volumes on the Beagle and called Lyell's influence on him the greatest intellectual debt of his life. Lyell finally accepted evolution in 1863, reluctantly.", r:19 },
+
+  // ─── DARWIN'S CIRCLE (1859–1899) ─────────────────────────────
+  { id:"c_darwin",    name:"Darwin",           full:"Charles Darwin",
+    dates:"1809–1882", era:"darwin", specialty:"Naturalist / Evolutionary Theorist",
+    note:"On the Origin of Species (1859) and The Descent of Man (1871). Proposed natural selection as the primary mechanism of evolution — the unifying principle of all biology. Synthesised inputs from Malthus (competition), Lyell (deep time), Wallace (co-discoverer), and Mendel (unknowingly missing). 'Nothing in biology makes sense except in the light of evolution' (Dobzhansky, about Darwin).", r:32 },
+
+  { id:"wallace",     name:"Wallace",          full:"Alfred Russel Wallace",
+    dates:"1823–1913", era:"darwin", specialty:"Naturalist / Biogeographer",
+    note:"Independently conceived natural selection (1858 letter from Ternate). The joint Linnean Society presentation with Darwin (1858) ended Darwin's delay. Founded biogeography: the Wallace Line separates Asian from Australian fauna. Differed from Darwin on the origin of the human mind (Wallace thought it required supernatural intervention).", r:22 },
+
+  { id:"hooker",      name:"Hooker",           full:"Joseph Dalton Hooker",
+    dates:"1817–1911", era:"darwin", specialty:"Botanist",
+    note:"Darwin's closest friend and first scientific confidant; Darwin revealed his species theory to Hooker in 1844 ('like confessing a murder'). Hooker's global plant surveys of Antarctica, India, and the Arctic provided the biogeographic evidence Darwin needed. Director of Kew Gardens; championed Darwin publicly from the first.", r:15 },
+
+  { id:"asa_gray",    name:"Asa Gray",         full:"Asa Gray",
+    dates:"1810–1888", era:"darwin", specialty:"Botanist",
+    note:"Harvard botanist and Darwin's primary American ally. Darwin sent Gray an early précis of natural selection (1857), establishing priority. Gray showed that plant species in eastern North America and Japan are more similar to each other than to intervening regions — powerful biogeographic evidence for common descent.", r:13 },
+
+  { id:"huxley_th",   name:"T.H. Huxley",      full:"Thomas Henry Huxley",
+    dates:"1825–1895", era:"darwin", specialty:"Biologist / Comparative Anatomist",
+    note:"'Darwin's Bulldog.' Won the famous 1860 Oxford debate against Bishop Wilberforce. Evidence as to Man's Place in Nature (1863): the first book on human evolution. Built comparative anatomy as a Darwinian discipline; founded the tradition his grandson Julian continued. Coined 'agnostic'; championed science education.", r:22 },
+
+  { id:"galton",      name:"Galton",           full:"Francis Galton",
+    dates:"1822–1911", era:"darwin", specialty:"Statistician / Anthropologist",
+    note:"Darwin's cousin; founder of biometry and (problematically) eugenics. Hereditary Genius (1869) was the first statistical study of human heredity. Introduced regression to the mean, the normal distribution for biological traits, and correlation — the mathematical machinery that Fisher and Pearson later turned into population genetics.", r:16 },
+
+  { id:"weismann",    name:"Weismann",         full:"August Weismann",
+    dates:"1834–1914", era:"darwin", specialty:"Evolutionary Biologist",
+    note:"Germ plasm theory (1892): hereditary information resides only in germ cells, cannot be modified by the body's experience, and is passed unchanged — the definitive pre-Mendelian refutation of Lamarckian inheritance. A committed neo-Darwinist who forced the separation of heredity from development, setting the stage for Mendel's rediscovery.", r:17 },
+
+  { id:"haeckel",     name:"Haeckel",          full:"Ernst Haeckel",
+    dates:"1834–1919", era:"darwin", specialty:"Biologist / Naturalist / Phylogeneticist",
+    note:"Darwin's chief German champion. Coined 'ecology,' 'phylogeny,' and 'ontogeny.' Drew the first phylogenetic trees of animal kingdoms. Recapitulation theory: 'ontogeny recapitulates phylogeny' — wrong in its strong form but the founding hypothesis that evo-devo's developmental genetics later replaced with a more nuanced picture.", r:16 },
+
+  { id:"mendel",      name:"Mendel",           full:"Gregor Mendel",
+    dates:"1822–1884", era:"darwin", specialty:"Botanist / Geneticist",
+    note:"Laws of Inheritance from 10 years of pea-plant experiments (published 1866; ignored until 1900 when independently rediscovered by de Vries, Correns, and Tschermak). Particulate heredity — discrete units of inheritance that don't blend — was the key missing mechanism Darwin needed to prevent natural selection from being swamped by blending.", r:22 },
+
+  // ─── GENETICS REVOLUTION (1900–1936) ─────────────────────────
+  { id:"de_vries",    name:"de Vries",         full:"Hugo de Vries",
+    dates:"1848–1935", era:"genetics", specialty:"Botanist / Mutationist",
+    note:"Independently rediscovered Mendel's laws (1900). Mutation Theory (1901): evolution proceeds by large-step mutations rather than gradual selection. Though mutationism was later reconciled with Darwinism, de Vries established mutation as an object of rigorous study and passed Mendelism to Bateson.", r:14 },
+
+  { id:"bateson",     name:"Bateson",          full:"William Bateson",
+    dates:"1861–1926", era:"genetics", specialty:"Geneticist",
+    note:"Coined 'genetics' (1905); translated Mendel into English and championed Mendelism in Britain. Discovered epistasis (gene-gene interaction) and genetic linkage. A committed saltationist who believed evolution proceeded by jumps, not gradual selection — a position Morgan's chromosome theory and then the Modern Synthesis refuted.", r:16 },
+
+  { id:"morgan",      name:"T.H. Morgan",      full:"Thomas Hunt Morgan",
+    dates:"1866–1945", era:"genetics", specialty:"Geneticist",
+    note:"Nobel Prize 1933. Drosophila genetics; chromosome theory of heredity; genetic linkage maps. The legendary 'Fly Room' at Columbia trained Muller, Sturtevant, and Bridges — the first genetics research group. Later at Caltech, he trained Dobzhansky, giving the entire Modern Synthesis its empirical foundation.", r:23 },
+
+  { id:"pearson",     name:"Pearson",          full:"Karl Pearson",
+    dates:"1857–1936", era:"genetics", specialty:"Statistician / Biometrician",
+    note:"Galton's intellectual heir and successor at UCL. Invented the Pearson correlation, chi-squared test, and p-value. Led the biometrics school in a fierce debate with Bateson's Mendelists. Fisher demolished Pearson's anti-Mendelism but built statistical genetics on top of Pearson's mathematical machinery.", r:15 },
+
+  { id:"muller",      name:"Muller",           full:"Hermann J. Muller",
+    dates:"1890–1967", era:"genetics", specialty:"Geneticist",
+    note:"Nobel Prize 1946. Morgan's student. Demonstrated that X-rays cause mutations (1927), proving mutations are chemically induced physical alterations of genes — the raw material of evolution can be generated experimentally. Quantified mutation rates; his work on mutational load drove both neutral theory (Kimura) and Muller's Ratchet.", r:16 },
+
+  // ─── MODERN SYNTHESIS (1937–1959) ────────────────────────────
+  { id:"fisher",      name:"Fisher",           full:"Ronald A. Fisher",
+    dates:"1890–1962", era:"synthesis", specialty:"Population Geneticist / Statistician",
+    note:"The Genetical Theory of Natural Selection (1930). United Mendel with Darwin mathematically: proved that continuous phenotypic variation (Galton/Pearson) is fully consistent with particulate Mendelian inheritance. Invented ANOVA, maximum likelihood, and experimental design. Arguably the single most important quantitative scientist for 20th-century biology.", r:25 },
+
+  { id:"haldane",     name:"Haldane",          full:"J.B.S. Haldane",
+    dates:"1892–1964", era:"synthesis", specialty:"Population Geneticist / Biochemist",
+    note:"The Causes of Evolution (1932). Mathematical treatment of selection, mutation, drift, and fitness. First estimated realistic selection coefficients; conceptually anticipated kin selection ('cost of natural selection'). Marxist polymath, war hero, and mentor to Maynard Smith. His breadth inspired a generation of theoretical biologists.", r:23 },
+
+  { id:"wright",      name:"S. Wright",        full:"Sewall Wright",
+    dates:"1889–1988", era:"synthesis", specialty:"Population Geneticist",
+    note:"Genetic drift; adaptive landscapes; effective population size; the shifting-balance theory. The Wright–Fisher debate over the relative roles of drift vs. selection dominated population genetics for decades. Dobzhansky's empirical work on geographic isolation in wild Drosophila was directly inspired by Wright's theoretical framework.", r:22 },
+
+  { id:"dobzhansky",  name:"Dobzhansky",       full:"Theodosius Dobzhansky",
+    dates:"1900–1975", era:"synthesis", specialty:"Evolutionary Biologist / Geneticist",
+    note:"Genetics and the Origin of Species (1937) — the keystone of the Modern Synthesis. United Morgan's chromosome genetics with Wallace-style field naturalism. Trained in Morgan's lab at Caltech; deeply influenced by Wright's drift theory. Trained Lewontin and Ayala. Wrote the famous essay: 'Nothing in Biology Makes Sense Except in the Light of Evolution.'", r:27 },
+
+  { id:"mayr",        name:"Mayr",             full:"Ernst Mayr",
+    dates:"1904–2005", era:"synthesis", specialty:"Evolutionary Biologist / Ornithologist",
+    note:"Systematics and the Origin of Species (1942). Biological Species Concept: a species is a group of actually or potentially interbreeding populations reproductively isolated from others. Allopatric speciation as the primary mode. Shaped every subsequent debate about species boundaries in paleontology, genetics, and zoology. At Harvard with Wilson.", r:24 },
+
+  { id:"simpson",     name:"Simpson",          full:"G.G. Simpson",
+    dates:"1902–1984", era:"synthesis", specialty:"Paleobiologist",
+    note:"Tempo and Mode in Evolution (1944). Brought the fossil record into the Modern Synthesis by showing that evolutionary rates and patterns in the fossil record are fully consistent with Darwinian mechanisms. Gould's punctuated equilibrium was written as a direct response to and challenge of Simpson's interpretation of that same fossil record.", r:22 },
+
+  { id:"julian_h",    name:"J. Huxley",        full:"Julian Huxley",
+    dates:"1887–1975", era:"synthesis", specialty:"Evolutionary Biologist",
+    note:"Evolution: The Modern Synthesis (1942) — coined the very term 'Modern Synthesis.' T.H. Huxley's grandson. Synthesised Dobzhansky's genetics, Mayr's systematics, Simpson's paleontology, and the botanists into a single coherent evolutionary framework. Co-founded UNESCO and popularised evolution for the general public.", r:18 },
+
+  { id:"stebbins",    name:"Stebbins",         full:"G. Ledyard Stebbins",
+    dates:"1906–2000", era:"synthesis", specialty:"Botanist / Evolutionary Biologist",
+    note:"Variation and Evolution in Plants (1950). Completed the Modern Synthesis by including the plant kingdom. Showed that polyploidy and hybridisation are major evolutionary mechanisms in plants — processes Mayr's animal-focused systematics had no framework for. The fourth pillar of the Synthesis alongside Dobzhansky, Mayr, and Simpson.", r:15 },
+
+  { id:"hutchinson",  name:"Hutchinson",       full:"G. Evelyn Hutchinson",
+    dates:"1903–1991", era:"synthesis", specialty:"Ecologist / Limnologist",
+    note:"'The father of modern ecology.' Formalised the ecological niche as an n-dimensional hypervolume. His essay 'Homage to Santa Rosalia' (1959) asked why there are so many kinds of animals, launching community ecology. Supervised MacArthur's PhD; deeply influenced Wilson and the quantitative school of evolutionary ecology.", r:19 },
+
+  { id:"waddington",  name:"Waddington",       full:"C.H. Waddington",
+    dates:"1905–1975", era:"synthesis", specialty:"Developmental Biologist / Evolutionary Theorist",
+    note:"The epigenetic landscape metaphor (1940s–57): canalization of development, genetic assimilation, and the idea that phenotypic plasticity can become genetically fixed. The missing bridge between development and evolution that the Modern Synthesis ignored — evo-devo would later build on his conceptual framework with molecular genetics.", r:17 },
+
+  // ─── MOLECULAR & BEHAVIORAL (1953–1985) ──────────────────────
+  { id:"watson",      name:"Watson",           full:"James D. Watson",
+    dates:"b. 1928", era:"molecular", specialty:"Molecular Biologist",
+    note:"Nobel Prize 1962 (with Crick and Franklin). DNA double helix structure (Nature, 1953). Transformed biology from a descriptive to an informational science. The double helix made the mechanism of heredity and mutation physically tangible, opening the door to molecular evolution, neutral theory, and ancient DNA. Directed the Human Genome Project (1990–92).", r:20 },
+
+  { id:"crick",       name:"Crick",            full:"Francis Crick",
+    dates:"1916–2004", era:"molecular", specialty:"Molecular Biologist",
+    note:"Nobel Prize 1962. Central Dogma of molecular biology (1958): information flows DNA→RNA→Protein, never in reverse. Sequence Hypothesis: biological specificity is encoded in sequence. These two principles gave Woese the conceptual tools to use rRNA sequences as molecular chronometers and reconstruct the tree of life.", r:20 },
+
+  { id:"pauling",     name:"Pauling",          full:"Linus Pauling",
+    dates:"1901–1994", era:"molecular", specialty:"Biochemist / Molecular Biologist",
+    note:"Two Nobel Prizes (Chemistry 1954; Peace 1962). Protein alpha-helix structure; first molecular disease (sickle-cell anaemia, 1949). With Zuckerkandl, proposed the molecular clock (1962, 1965): protein sequences diverge at a roughly constant rate, giving evolutionary time estimates independent of the fossil record.", r:19 },
+
+  { id:"zuckerkandl", name:"Zuckerkandl",      full:"Emile Zuckerkandl",
+    dates:"1922–2013", era:"molecular", specialty:"Molecular Evolutionary Biologist",
+    note:"Worked in Pauling's lab at Caltech. Co-invented the molecular clock: haemoglobin and cytochrome-c amino-acid sequences diverge at a roughly constant rate, providing an independent evolutionary chronometer. This data was the primary stimulus for Kimura's neutral theory and the entire field of molecular phylogenetics.", r:16 },
+
+  { id:"kimura",      name:"Kimura",           full:"Motoo Kimura",
+    dates:"1924–1994", era:"molecular", specialty:"Population Geneticist / Theoretician",
+    note:"Neutral Theory of Molecular Evolution (1968): most molecular variation is selectively neutral, fixed by genetic drift rather than selection. The most important challenge to pan-selectionism since Darwin. Built directly on Wright's drift mathematics and was provoked by the constant molecular clock; Wright called it the finest application of his own theory.", r:21 },
+
+  { id:"woese",       name:"Woese",            full:"Carl Woese",
+    dates:"1928–2012", era:"molecular", specialty:"Microbiologist / Phylogeneticist",
+    note:"Discovered the Archaea as a third domain of life using 16S rRNA sequences (1977). Transformed the tree of life from two branches (prokaryotes / eukaryotes) to three (Bacteria / Archaea / Eukarya). Applied Crick's sequence hypothesis to the deepest phylogenetic questions; his methods are the basis of all modern environmental DNA sequencing.", r:20 },
+
+  { id:"hamilton",    name:"Hamilton",         full:"W.D. Hamilton",
+    dates:"1936–2000", era:"molecular", specialty:"Evolutionary Biologist / Theoretician",
+    note:"Inclusive fitness / kin selection (1964): Hamilton's rule rB > C explains altruism in terms of shared genes. The theoretical foundation of sociobiology and behavioural ecology. Dawkins called him 'the most important Darwinian since Darwin.' Also developed the evolutionary theory of sex (Red Queen with Marlene Zuk) and the parasite theory of sexual reproduction.", r:24 },
+
+  { id:"williams",    name:"Williams",         full:"George C. Williams",
+    dates:"1926–2010", era:"molecular", specialty:"Evolutionary Biologist",
+    note:"Adaptation and Natural Selection (1966): systematically demolished group selection; established that natural selection operates primarily at the level of the individual gene, not the group or species. This book is the direct source of Dawkins' Selfish Gene metaphor. Also developed the evolutionary theory of ageing (antagonistic pleiotropy).", r:22 },
+
+  { id:"maynard_s",   name:"Maynard Smith",    full:"John Maynard Smith",
+    dates:"1920–2004", era:"molecular", specialty:"Evolutionary Biologist / Game Theorist",
+    note:"Evolutionary game theory and evolutionarily stable strategies (ESS). The Major Transitions in Evolution (1995, with Szathmáry): identified the key steps in the evolution of complexity (first cells, sexual reproduction, multicellularity, language). Haldane's student at UCL; Hamilton's intellectual partner in the theory of social evolution.", r:22 },
+
+  { id:"trivers",     name:"Trivers",          full:"Robert Trivers",
+    dates:"b. 1943", era:"molecular", specialty:"Evolutionary Biologist",
+    note:"Three foundational papers in three years: reciprocal altruism (1971), parental investment and sexual selection (1972), parent–offspring conflict (1974). Built the entire empirical programme of behavioural ecology on Hamilton's inclusive fitness framework. Dawkins credits Trivers in the preface to The Selfish Gene as the source of its key ideas.", r:20 },
+
+  { id:"macarthur",   name:"MacArthur",        full:"Robert MacArthur",
+    dates:"1930–1972", era:"molecular", specialty:"Ecologist / Evolutionary Biologist",
+    note:"Hutchinson's PhD student at Yale. Co-wrote The Theory of Island Biogeography (1967) with E.O. Wilson — transformed ecology into a predictive, quantitative, evolutionary science. r/K selection theory. Died at 42 from cancer; in a decade redefined ecology. Hugely influential on the field that demonstrated evolution in real time.", r:19 },
+
+  { id:"wilson_eo",   name:"E.O. Wilson",      full:"Edward O. Wilson",
+    dates:"1929–2021", era:"molecular", specialty:"Entomologist / Evolutionary Biologist",
+    note:"Sociobiology: The New Synthesis (1975) — applied inclusive fitness, kin selection, and evolutionary theory systematically to all social behaviour across the animal kingdom. The controversial final chapter on humans launched the sociobiology wars. Island Biogeography with MacArthur. The Diversity of Life. Two Pulitzer Prizes. Trained at Harvard under Mayr.", r:24 },
+
+  { id:"dawkins",     name:"Dawkins",          full:"Richard Dawkins",
+    dates:"b. 1941", era:"molecular", specialty:"Evolutionary Biologist / Science Communicator",
+    note:"The Selfish Gene (1976): popularised Hamilton's inclusive fitness and Williams' gene-level selection via the gene's-eye view and the 'meme' concept. The Extended Phenotype; The Blind Watchmaker. Oxford, DPhil under Niko Tinbergen (ethology). The most widely read populariser of evolutionary theory of the late 20th century.", r:22 },
+
+  { id:"lewontin",    name:"Lewontin",         full:"Richard Lewontin",
+    dates:"1929–2021", era:"molecular", specialty:"Population Geneticist",
+    note:"Dobzhansky's student. Introduced gel electrophoresis to reveal far more protein polymorphism than pan-selectionism predicted — key empirical stimulus for Kimura's neutral theory. With Gould, authored 'The Spandrels of San Marco' (1979), the most cited critique of naive adaptationism in evolutionary biology.", r:20 },
+
+  { id:"margulis",    name:"Margulis",         full:"Lynn Margulis",
+    dates:"1938–2011", era:"molecular", specialty:"Evolutionary Biologist / Cell Biologist",
+    note:"Serial endosymbiosis theory (1967): mitochondria and chloroplasts are descended from free-living bacteria engulfed by ancestral eukaryotic cells. Initially rejected by 15 journals. Now a cornerstone of eukaryotic evolution and the most fundamental revision to the standard evolutionary narrative since the Synthesis — directly validated by Woese's molecular phylogenetics.", r:21 },
+
+  { id:"ehrlich",     name:"Ehrlich",          full:"Paul Ehrlich",
+    dates:"b. 1932", era:"molecular", specialty:"Ecologist / Evolutionary Biologist",
+    note:"With Peter Raven, proposed coevolution (1964) using butterfly–plant interactions: species evolve in response to each other in an ongoing arms race, generating much of Earth's biodiversity. Population biology; The Population Bomb (1968). Helped transform ecology from description to evolutionary process.", r:16 },
+
+  { id:"p_grant",     name:"P. Grant",         full:"Peter Grant",
+    dates:"b. 1936", era:"molecular", specialty:"Evolutionary Biologist / Ornithologist",
+    note:"Princeton. 40 years of fieldwork on Darwin's finches in the Galápagos with Rosemary Grant. First direct real-time measurement of natural selection in a wild vertebrate population: beak size evolution during 1977 El Niño drought. The empirical demonstration that Darwin's mechanism works on observable timescales.", r:18 },
+
+  { id:"r_grant",     name:"R. Grant",         full:"Rosemary Grant",
+    dates:"b. 1936", era:"molecular", specialty:"Evolutionary Biologist / Ornithologist",
+    note:"Peter Grant's equal scientific partner in the Galápagos finch studies. Focused on hybridisation between finch species and reproductive isolation — demonstrating speciation processes in real time. Jointly won the Kyoto Prize (2009) for the empirical demonstration of natural selection.", r:16 },
+
+  { id:"hennig",      name:"Hennig",           full:"Willi Hennig",
+    dates:"1913–1976", era:"molecular", specialty:"Systematist / Cladist",
+    note:"Phylogenetic Systematics (English, 1966). Founded cladistics: organisms should be classified solely by shared derived characters (synapomorphies) tracing back to a common ancestor — not by overall similarity. Every modern phylogenetic tree, molecular or morphological, is built on Hennig's logical framework.", r:19 },
+
+  { id:"felsenstein", name:"Felsenstein",      full:"Joseph Felsenstein",
+    dates:"b. 1942", era:"molecular", specialty:"Computational Biologist / Phylogeneticist",
+    note:"PHYLIP (1980) — the first widely distributed computational phylogenetics software. Maximum likelihood in phylogenetics; bootstrap confidence on tree branches. Translated Hennig's cladistic logic into rigorous statistical algorithms executable on a computer. Every modern phylogenetic analysis (molecular or otherwise) traces its methods to Felsenstein's formalisation.", r:18 },
+
+  // ─── EVO-DEVO, MACROEVOLUTION (1966–2005) ────────────────────
+  { id:"gould",       name:"Gould",            full:"Stephen Jay Gould",
+    dates:"1941–2002", era:"evodevo", specialty:"Paleobiologist / Evolutionary Theorist",
+    note:"Punctuated equilibrium (with Eldredge, 1972): species remain stable for long periods and change rapidly in bursts. 'Spandrels of San Marco' (with Lewontin, 1979): critique of naive adaptationism. Ontogeny and Phylogeny (1977): rehabilitated heterochrony as a major evolutionary mechanism, directly motivating evo-devo. The Mismeasure of Man. The most read evolutionary biologist of the late 20th century after Dawkins.", r:24 },
+
+  { id:"eldredge",    name:"Eldredge",         full:"Niles Eldredge",
+    dates:"b. 1943", era:"evodevo", specialty:"Paleobiologist",
+    note:"Co-proposed punctuated equilibrium with Gould (1972). Showed that his trilobite fossil lineages are characterised by long stasis, not gradual change — directly contradicting the reading of the fossil record in Simpson's Tempo and Mode. Hierarchy theory of evolution: selection operates at multiple levels simultaneously.", r:18 },
+
+  { id:"lewis_ed",    name:"E.B. Lewis",       full:"Edward B. Lewis",
+    dates:"1918–2004", era:"evodevo", specialty:"Developmental Geneticist",
+    note:"Nobel Prize 1995. Discovered the Hox gene complex (homeotic gene clusters) in Drosophila: a master regulatory toolkit that specifies the identity of body segments along the anterior–posterior axis. This was the molecular discovery that converted Haeckel's and Waddington's conceptual frameworks into mechanistic evo-devo.", r:18 },
+
+  { id:"nusslein",    name:"Nüsslein-Volhard", full:"Christiane Nüsslein-Volhard",
+    dates:"b. 1942", era:"evodevo", specialty:"Developmental Geneticist",
+    note:"Nobel Prize 1995 (with Wieschaus and E.B. Lewis). Systematic genetic screen of Drosophila embryogenesis identified gap genes, pair-rule genes, and segment-polarity genes — the complete developmental toolkit specifying body plan. These genes are conserved across all bilaterian animals, making them the empirical foundation of evo-devo.", r:20 },
+
+  { id:"raff",        name:"R. Raff",          full:"Rudolf Raff",
+    dates:"1941–2019", era:"evodevo", specialty:"Evolutionary Developmental Biologist",
+    note:"The Shape of Life (1996) founded evo-devo as a recognised discipline. Demonstrated that Hox and other developmental toolkit genes are conserved across animal phyla separated by 500 million years, implying all animals share a common genetic ground plan. Sean Carroll's PhD mentor at Indiana University.", r:18 },
+
+  { id:"s_carroll",   name:"S.B. Carroll",     full:"Sean B. Carroll",
+    dates:"b. 1960", era:"evodevo", specialty:"Evolutionary Developmental Biologist",
+    note:"Endless Forms Most Beautiful (2005). Showed that the enormous diversity of animal body plans is generated primarily by changes in the regulatory DNA that controls when, where, and how much developmental toolkit genes (Hox, Pax, tinman, etc.) are expressed — not by the evolution of new genes. Raff's PhD student at Indiana.", r:21 },
+
+  { id:"raup",        name:"Raup",             full:"David Raup",
+    dates:"1933–2015", era:"evodevo", specialty:"Paleobiologist",
+    note:"With Sepkoski, used Sepkoski's comprehensive fossil database to quantify the Big Five mass extinctions and propose periodic extinction every ~26 million years (possibly driven by astronomical cycles). Challenged purely adaptive interpretations of evolutionary change by showing that contingency and catastrophe shape the tree of life.", r:16 },
+
+  { id:"sepkoski",    name:"Sepkoski",         full:"J.J. Sepkoski Jr.",
+    dates:"1948–1999", era:"evodevo", specialty:"Paleobiologist",
+    note:"Compiled the first comprehensive database of marine invertebrate fossil genera and their stratigraphic ranges — the foundation of quantitative macroevolution. Identified three evolutionary faunas in the Phanerozoic. Raup's close collaborator at the University of Chicago; his database remains the primary empirical resource for macroevolutionary analysis.", r:17 },
+
+  { id:"margulis2",   name:"(endosymbiosis)",  full:"(see Lynn Margulis)",
+    dates:"", era:"evodevo", specialty:"", note:"", r:0 },   // placeholder — Margulis already in molecular
+
+  // ─── GENOMICS ERA (1990–present) ─────────────────────────────
+  { id:"lynch",       name:"Lynch",            full:"Michael Lynch",
+    dates:"b. 1951", era:"genomics", specialty:"Population Geneticist / Evolutionary Genomicist",
+    note:"The Origins of Genome Architecture (2007): extended Kimura's neutral theory into the genomics era. Argued that genome complexity (introns, gene duplications, transposable elements) is largely a product of non-adaptive processes driven by small effective population sizes and drift — directly opposing the adaptationist genomics mainstream.", r:16 },
+
+  { id:"ayala",       name:"Ayala",            full:"Francisco Ayala",
+    dates:"1934–2023", era:"genomics", specialty:"Evolutionary Biologist / Geneticist",
+    note:"Dobzhansky's doctoral student. Applied molecular clocks and protein electrophoresis to evolutionary questions including the origin of Homo sapiens, malaria parasite evolution, and the speed of speciation. Prolific science-religion commentator; the most visible academic evolutionary biologist of the early 21st century in North America.", r:15 },
+
+  { id:"paabo",       name:"Pääbo",            full:"Svante Pääbo",
+    dates:"b. 1955", era:"genomics", specialty:"Evolutionary Genomicist / Ancient DNA Pioneer",
+    note:"Nobel Prize 2022. Extracted ancient DNA from Egyptian mummies (1985), then Neanderthal mitochondria (1997), then the complete Neanderthal nuclear genome (2010). Discovered Denisovans from a finger bone (2010). Founded the field of paleogenomics. Trained in Allan Wilson's Berkeley lab; built the MPI for Evolutionary Anthropology in Leipzig.", r:22 },
+
+  { id:"reich",       name:"Reich",            full:"David Reich",
+    dates:"b. 1974", era:"genomics", specialty:"Population Geneticist / Ancient DNA Researcher",
+    note:"Harvard. Large-scale ancient DNA sequencing across thousands of prehistoric individuals. Proved Neanderthal admixture in non-Africans (2010, with Pääbo). Demonstrated massive population replacements in Europe, Asia, and the Americas that were invisible in the modern genetic record. Who We Are and How We Got Here (2018). Developed ADMIXTOOLS statistical framework.", r:21 },
+
+  { id:"felsenstein2",name:"(see Felsenstein)", full:"", dates:"", era:"genomics", specialty:"", note:"", r:0 },
+
+];
+
+// Remove placeholder nodes
+const filteredNodes = nodes.filter(n => n.r > 0);
+
+// ═══════════════════════════════════════════════════════════════
+//  LINKS
+// ═══════════════════════════════════════════════════════════════
+const rawLinks = [
+
+  // ─── PRECURSORS ──────────────────────────────────────────────
+  { source:"buffon",     target:"lamarck",    type:"mentor",    label:"Lamarck worked at the Jardin du Roi under Buffon's direct patronage; Buffon introduced the idea of species mutability that Lamarck formalised into the first evolutionary theory" },
+  { source:"buffon",     target:"e_darwin",   type:"inspired",  label:"Buffon's natural history was widely translated and read across Europe; his ideas of species change over deep time were part of the intellectual atmosphere Erasmus Darwin absorbed" },
+  { source:"e_darwin",   target:"c_darwin",   type:"inspired",  label:"Erasmus Darwin's Zoonomia (1794), proposing descent with modification, was in the Darwin household; Charles re-read it before the Beagle voyage and later credited it as an early stimulus" },
+  { source:"lamarck",    target:"c_darwin",   type:"inspired",  label:"Darwin read Lamarck carefully and explicitly rejected the use/disuse mechanism, but Lamarck framed the central question — how do species change over time? — that Darwin's theory answered" },
+  { source:"malthus",    target:"c_darwin",   type:"inspired",  label:"Darwin's single most decisive intellectual moment: reading Malthus's Essay on Population in October 1838 gave him the mechanism of natural selection — struggle for limited resources" },
+  { source:"cuvier",     target:"lyell",      type:"debated",   label:"Lyell's uniformitarianism was a direct intellectual refutation of Cuvier's catastrophism; Lyell's entire first volume of Principles of Geology argues against periodic catastrophic extinctions" },
+  { source:"lyell",      target:"c_darwin",   type:"mentor",    label:"Darwin's greatest intellectual debt: Lyell gave him deep time and the principle of gradual geological change; Darwin carried Lyell's Principles on the Beagle and corresponded with him throughout his career" },
+
+  // ─── DARWIN'S CIRCLE ─────────────────────────────────────────
+  { source:"c_darwin",   target:"wallace",    type:"colleague", label:"Co-discoverers of natural selection; the 1858 joint Linnean Society paper was arranged by Hooker and Lyell to share priority. They respected each other but diverged on human evolution" },
+  { source:"c_darwin",   target:"hooker",     type:"colleague", label:"Darwin's closest scientific friend from 1844 onward; first to whom Darwin revealed his species theory. Hooker's plant biogeography provided crucial evidence; he championed Darwin publicly and personally" },
+  { source:"c_darwin",   target:"asa_gray",   type:"colleague", label:"Primary American ally; Darwin sent Gray a manuscript précis of natural selection in 1857, before publication. Gray's disjunct plant distribution data (eastern N. America / Japan) supported common descent" },
+  { source:"c_darwin",   target:"huxley_th",  type:"inspired",  label:"Huxley read Origin overnight and became 'Darwin's Bulldog' immediately. Darwin chose Huxley as his public champion; Huxley won the 1860 Oxford debate and built comparative anatomy around Darwinism" },
+  { source:"c_darwin",   target:"galton",     type:"inspired",  label:"Galton (Darwin's cousin) was directly inspired by Origin to apply statistical methods to heredity; Darwin discussed his regression data with Galton and called his work 'admirable'" },
+  { source:"c_darwin",   target:"weismann",   type:"inspired",  label:"Weismann became a devoted Darwinist; his germ plasm theory was explicitly constructed to defend natural selection by cutting off Lamarckian contamination via acquired inheritance" },
+  { source:"c_darwin",   target:"haeckel",    type:"inspired",  label:"Haeckel became Darwin's primary German champion immediately after reading Origin; Darwin called Haeckel's General Morphology the best defence of the theory he had read" },
+  { source:"huxley_th",  target:"julian_h",   type:"mentor",    label:"Julian Huxley was T.H.'s grandson; grew up saturated with the Darwinian tradition. Evolution: The Modern Synthesis (1942) consciously carried the T.H. Huxley programme into the genetic era" },
+  { source:"haeckel",    target:"waddington", type:"inspired",  label:"Haeckel's recapitulation theory set the developmental-evolutionary problem that Waddington's epigenetic landscape reconceived; evo-devo replaced Haeckel's 'recapitulation' with mechanistic regulatory genetics" },
+
+  // ─── GENETICS ────────────────────────────────────────────────
+  { source:"mendel",     target:"de_vries",   type:"inspired",  label:"de Vries independently rediscovered Mendel's laws in 1900, realising he had been duplicating work published in 1866; he immediately promoted Mendel and the laws of particulate inheritance" },
+  { source:"mendel",     target:"bateson",    type:"inspired",  label:"Bateson translated Mendel's paper into English (1901) and named the new science 'genetics'; his championing of Mendelism transformed British biology" },
+  { source:"de_vries",   target:"bateson",    type:"colleague", label:"Bateson visited de Vries in Amsterdam; their exchange established the core of Mendelism in Britain and shaped early 20th-century genetics" },
+  { source:"bateson",    target:"morgan",     type:"inspired",  label:"Morgan engaged intensely with Bateson's Mendelism before developing the chromosome theory of heredity, which answered the linkage puzzles Bateson had identified but could not explain" },
+  { source:"galton",     target:"pearson",    type:"mentor",    label:"Pearson was Galton's direct intellectual successor at UCL; took over the biometrics programme, greatly expanded its statistical machinery, and fought for it against the Mendelists" },
+  { source:"pearson",    target:"fisher",     type:"debated",   label:"Fisher's first major paper (1918) demolished Pearson's argument that biometrical heredity was incompatible with Mendelism; Fisher built statistical genetics on Pearson's mathematical foundations while refuting his biological conclusions" },
+  { source:"morgan",     target:"muller",     type:"mentor",    label:"Muller worked in Morgan's Fly Room at Columbia; his PhD and early career work on mutation rates and lethal alleles were under Morgan's direct supervision and using Morgan's Drosophila system" },
+  { source:"morgan",     target:"dobzhansky", type:"mentor",    label:"Dobzhansky moved from Kiev to Morgan's Caltech lab in 1927; Morgan's chromosome genetics gave him the experimental tools to study genetic variation in wild Drosophila populations" },
+
+  // ─── MODERN SYNTHESIS ────────────────────────────────────────
+  { source:"fisher",     target:"haldane",    type:"colleague", label:"Fisher and Haldane were the two mathematical pillars of population genetics; they debated selection coefficients, dominance evolution, and the cost of natural selection across three decades" },
+  { source:"fisher",     target:"wright",     type:"debated",   label:"The Fisher–Wright controversy: Fisher argued selection dominates drift; Wright argued drift and geographic fragmentation are crucial. Both built population genetics but in productive opposition for 30 years" },
+  { source:"haldane",    target:"maynard_s",  type:"mentor",    label:"Maynard Smith was a student and junior colleague of Haldane at UCL; Haldane's breadth — genetics, biochemistry, physiology, Marxism — directly inspired Maynard Smith's own interdisciplinary mathematical biology" },
+  { source:"wright",     target:"dobzhansky", type:"colleague", label:"Wright's shifting-balance theory and genetic drift were the theoretical scaffolding Dobzhansky used to explain the patterns of genetic variation he found in wild Drosophila populations across the US" },
+  { source:"dobzhansky", target:"mayr",       type:"colleague", label:"Mayr and Dobzhansky were in constant correspondence throughout the 1940s; Mayr's allopatric speciation theory was built on Dobzhansky's population genetic framework" },
+  { source:"dobzhansky", target:"lewontin",   type:"mentor",    label:"Lewontin did his PhD (Chicago) and postdoc with Dobzhansky; carried the empirical Drosophila programme into the age of molecular markers, then applied it to human genetic variation" },
+  { source:"dobzhansky", target:"ayala",      type:"mentor",    label:"Ayala completed his PhD under Dobzhansky at Rockefeller; became the leading voice applying population genetic theory to molecular evolution and the origin of Homo sapiens" },
+  { source:"mayr",       target:"wilson_eo",  type:"mentor",    label:"Wilson was at Harvard when Mayr was curator; Mayr's Biological Species Concept and his insistence that ecology and behavior connect to systematics shaped Wilson's approach to biodiversity and sociobiology" },
+  { source:"mayr",       target:"julian_h",   type:"colleague", label:"Mayr, Julian Huxley, Dobzhansky, and Simpson were the four architects who defined the Modern Synthesis in personal correspondence and mutual citation throughout the 1940s" },
+  { source:"simpson",    target:"gould",      type:"debated",   label:"Gould's entire early career was built by critiquing Simpson: punctuated equilibrium was a direct response to Simpson's gradualist reading of the fossil record in Tempo and Mode" },
+  { source:"hutchinson", target:"macarthur",  type:"mentor",    label:"MacArthur was Hutchinson's PhD student at Yale; Hutchinson's niche theory directly inspired MacArthur's programme to make ecology quantitative and predictive" },
+  { source:"hutchinson", target:"wilson_eo",  type:"inspired",  label:"Wilson credits Hutchinson's 'Homage to Santa Rosalia' (1959) as a decisive influence; Hutchinson's question about species diversity directly motivated the Island Biogeography work" },
+  { source:"waddington", target:"s_carroll",  type:"inspired",  label:"Carroll's evo-devo programme was partly motivated by Waddington's epigenetic landscape; Carroll's regulatory evolution provides the molecular mechanism for Waddington's canalization and genetic assimilation" },
+  { source:"waddington", target:"raff",       type:"inspired",  label:"Raff's The Shape of Life explicitly cites Waddington as the conceptual precursor whose ideas about development and evolution evo-devo finally provided the molecular genetics to realise" },
+
+  // ─── MOLECULAR & BEHAVIORAL ──────────────────────────────────
+  { source:"watson",     target:"crick",      type:"colleague", label:"Joint discoverers of the DNA double helix (Nature, April 1953) — the most productive month-long collaboration in modern biology, based on Rosalind Franklin's X-ray data and Chargaff's base ratios" },
+  { source:"pauling",    target:"zuckerkandl",type:"mentor",    label:"Zuckerkandl worked in Pauling's Caltech laboratory; their joint papers of 1962 and 1965 proposed the molecular clock: sequences diverge at roughly constant rates, giving independent evolutionary time estimates" },
+  { source:"zuckerkandl",target:"kimura",     type:"inspired",  label:"Kimura's neutral theory (1968) was directly provoked by the molecular clock data — a constant substitution rate makes no sense under selection but is expected under drift; Kimura acknowledged Zuckerkandl and Pauling as the empirical stimulus" },
+  { source:"crick",      target:"woese",      type:"inspired",  label:"Woese was inspired by Crick's sequence hypothesis and central dogma to use rRNA sequences as molecular chronometers; Crick's idea that sequence carries evolutionary history became Woese's operational tool for reconstructing the deepest tree of life" },
+  { source:"kimura",     target:"lynch",      type:"inspired",  label:"Lynch extended Kimura's neutral framework into the genome era, arguing that most genome complexity arises from drift in small populations rather than adaptation — the most rigorous modern development of neutral theory" },
+  { source:"margulis",   target:"woese",      type:"colleague", label:"Margulis and Woese together reshaped the deepest structure of the tree of life: Margulis showed eukaryotes are chimeras of bacterial endosymbionts; Woese placed Archaea as a third separate domain — their combined work rewrote biology textbooks" },
+  { source:"hamilton",   target:"maynard_s",  type:"colleague", label:"Hamilton and Maynard Smith were the twin formal theorists of social evolution; they debated kin selection versus group selection and ESS throughout the 1970s at Oxford and Sussex, with productive mutual influence" },
+  { source:"hamilton",   target:"trivers",    type:"inspired",  label:"Trivers built reciprocal altruism, parental investment, and parent-offspring conflict directly on Hamilton's inclusive fitness framework; Trivers described himself as working out the empirical implications of Hamilton's algebra" },
+  { source:"hamilton",   target:"dawkins",    type:"inspired",  label:"The Selfish Gene (1976) is Hamilton's inclusive fitness theory retold from the gene's point of view; Dawkins explicitly describes his book as a vehicle for communicating Hamilton's ideas to a broader audience" },
+  { source:"williams",   target:"dawkins",    type:"inspired",  label:"Adaptation and Natural Selection (1966) established the gene-level view; Dawkins describes it as one of the most important biology books ever written and The Selfish Gene is its popular retelling" },
+  { source:"williams",   target:"hamilton",   type:"colleague", label:"Williams and Hamilton were the twin pillars of the gene-level revolution of the 1960s–70s; Williams' group-selection critique and Hamilton's inclusive fitness mathematics were mutually reinforcing" },
+  { source:"maynard_s",  target:"dawkins",    type:"inspired",  label:"Dawkins incorporated Maynard Smith's ESS framework directly into The Selfish Gene; they were Oxford colleagues and Dawkins used game theory to extend Hamilton's algebra into animal behaviour" },
+  { source:"macarthur",  target:"wilson_eo",  type:"colleague", label:"The Theory of Island Biogeography (1967) — co-authored by MacArthur and Wilson — transformed ecology with evolutionary and mathematical models; the most productive ecology collaboration of the 20th century" },
+  { source:"lewontin",   target:"gould",      type:"colleague", label:"'Spandrels of San Marco and the Panglossian Paradigm' (1979) — co-authored by Lewontin and Gould — is the most cited critique of naive adaptationism in evolutionary biology; they shared a political and intellectual critique of sociobiological overreach" },
+  { source:"hennig",     target:"felsenstein",type:"inspired",  label:"Felsenstein took Hennig's cladistic logic and translated it into rigorous statistical algorithms; PHYLIP implements maximum likelihood and bootstrap methods that give Hennig's parsimony a probabilistic foundation" },
+  { source:"p_grant",    target:"r_grant",    type:"colleague", label:"Peter and Rosemary Grant conducted 40 years of joint fieldwork on Daphne Major in the Galápagos; their collaboration is the most sustained direct measurement of natural selection and incipient speciation in a wild vertebrate population" },
+
+  // ─── EVO-DEVO & MACROEVOLUTION ───────────────────────────────
+  { source:"lewis_ed",   target:"nusslein",   type:"inspired",  label:"Lewis's Hox gene discovery (published 1978) provided the molecular framework — master regulatory genes specifying body-axis identity — that Nüsslein-Volhard and Wieschaus's systematic screen extended into a complete developmental toolkit" },
+  { source:"nusslein",   target:"s_carroll",  type:"inspired",  label:"Carroll built evo-devo directly on Nüsslein-Volhard's developmental toolkit; his comparative developmental genetics across phyla is the extension of her Drosophila screen to evolutionary questions" },
+  { source:"raff",       target:"s_carroll",  type:"mentor",    label:"Carroll trained in Raff's lab at Indiana University; The Shape of Life (Raff, 1996) and Endless Forms Most Beautiful (Carroll, 2005) together define the evo-devo canon — mentor and student" },
+  { source:"gould",      target:"raff",       type:"inspired",  label:"Raff's evo-devo programme was partly motivated by Gould's Ontogeny and Phylogeny (1977), which rehabilitated heterochrony and demonstrated that developmental timing changes are major evolutionary mechanisms" },
+  { source:"gould",      target:"eldredge",   type:"colleague", label:"Punctuated equilibrium was jointly proposed by Gould and Eldredge in a 1972 paper; their intellectual partnership defined macroevolutionary theory and the palaeontological challenge to strict gradualism for a generation" },
+  { source:"raup",       target:"sepkoski",   type:"colleague", label:"Raup and Sepkoski collaborated at the University of Chicago; Sepkoski's comprehensive fossil database provided the data for Raup's statistical analyses of extinction periodicity and the geometry of the Big Five events" },
+  { source:"simpson",    target:"raup",       type:"inspired",  label:"Raup extended Simpson's quantitative palaeontology programme; his macroevolutionary analyses used the same fossil data Simpson had interpreted in terms of Darwinian rates but drew different, more contingency-focused conclusions" },
+  { source:"muller",     target:"kimura",     type:"inspired",  label:"Kimura's neutral theory partly addressed Muller's load problem: if most mutations are neutral rather than deleterious, the mutational load on populations is far less than Muller's calculations suggested" },
+
+  // ─── GENOMICS ERA ────────────────────────────────────────────
+  { source:"watson",     target:"paabo",      type:"inspired",  label:"Watson's DNA double helix and the entire molecular biology tradition made Pääbo's ancient DNA work conceivable; Pääbo extended DNA sequencing from living to ancient and degraded material" },
+  { source:"dobzhansky", target:"ayala",      type:"mentor",    label:"(repeated for clarity) Ayala did his PhD with Dobzhansky and became the most prominent public evolutionary biologist of the early 21st century, bridging the Dobzhansky school and molecular genomics" },
+  { source:"kimura",     target:"lynch",      type:"inspired",  label:"Lynch's entire programme — non-adaptive genome evolution, mutational meltdown, drift-driven complexity — is the direct genomics-era extension of Kimura's neutral theory" },
+  { source:"paabo",      target:"reich",      type:"colleague", label:"Pääbo and Reich are the two architects of the ancient DNA revolution; Reich's statistical tools (ADMIXTOOLS, D-statistics) and Pääbo's ancient DNA extraction methods are inseparable — Neanderthal admixture was proved by their combined methods" },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  SETUP
+// ═══════════════════════════════════════════════════════════════
+
+const ERA_COLORS = {
+  precursor: "#c9843e",
+  darwin:    "#2ea043",
+  genetics:  "#388bfd",
+  synthesis: "#bc8cff",
+  molecular: "#e3b341",
+  evodevo:   "#76e3ea",
+  genomics:  "#db61a2"
+};
+
+const ERA_LABELS = {
+  precursor: "Pre-Darwin (–1858)",
+  darwin:    "Darwin's Circle (1859–1899)",
+  genetics:  "Genetics Revolution (1900–1936)",
+  synthesis: "Modern Synthesis (1937–1959)",
+  molecular: "Molecular & Behavioral (1953–1985)",
+  evodevo:   "Evo-Devo & Macroevolution (1966–2005)",
+  genomics:  "Genomics Era (1990–present)"
+};
+
+const TYPE_COLORS = {
+  mentor:    "#58a6ff",
+  colleague: "#56d364",
+  inspired:  "#6e7681",
+  debated:   "#f78166"
+};
+
+const TYPE_LABELS = {
+  mentor:    "mentored →",
+  colleague: "collaborated with",
+  inspired:  "intellectually influenced",
+  debated:   "debated / responded to"
+};
+
+// Build adjacency map (before D3 mutates links)
+const nodeMap = {};
+filteredNodes.forEach(n => { nodeMap[n.id] = n; });
+
+const adj = {};
+filteredNodes.forEach(n => { adj[n.id] = []; });
+rawLinks.forEach(l => {
+  if (adj[l.source]) adj[l.source].push({ dir:"out", other:l.target, type:l.type, label:l.label });
+  if (adj[l.target]) adj[l.target].push({ dir:"in",  other:l.source, type:l.type, label:l.label });
+});
+
+// D3-consumable copy
+const d3Links = rawLinks.map(l => ({ ...l }));
+
+// ═══════════════════════════════════════════════════════════════
+//  SVG / ZOOM
+// ═══════════════════════════════════════════════════════════════
+const container = document.getElementById("graph-container");
+const svg       = d3.select("#graph");
+const g         = svg.append("g");
+
+const zoom = d3.zoom().scaleExtent([0.1, 6]).on("zoom", e => g.attr("transform", e.transform));
+svg.call(zoom);
+
+// ─── Arrow markers ──────────────────────────────────────────────
+const defs = svg.append("defs");
+Object.entries(TYPE_COLORS).forEach(([type, color]) => {
+  defs.append("marker")
+    .attr("id",          "arr-" + type)
+    .attr("viewBox",     "0 -5 10 10")
+    .attr("refX",        22)
+    .attr("refY",        0)
+    .attr("markerWidth", 5)
+    .attr("markerHeight",5)
+    .attr("orient",      "auto")
+    .append("path")
+    .attr("d",    "M0,-5L10,0L0,5")
+    .attr("fill", color);
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  SIMULATION
+// ═══════════════════════════════════════════════════════════════
+const sim = d3.forceSimulation(filteredNodes)
+  .force("link", d3.forceLink(d3Links)
+    .id(d => d.id)
+    .distance(d => d.type === "mentor" ? 100 : d.type === "colleague" ? 130 : 175)
+    .strength(d => d.type === "mentor" ? 0.65 : d.type === "colleague" ? 0.45 : 0.25)
+  )
+  .force("charge",    d3.forceManyBody().strength(-700))
+  .force("center",    d3.forceCenter(0, 0))
+  .force("collision", d3.forceCollide(d => d.r + 16))
+  .force("x",         d3.forceX(0).strength(0.015))
+  .force("y",         d3.forceY(0).strength(0.015));
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER LINKS
+// ═══════════════════════════════════════════════════════════════
+const linkEl = g.append("g").selectAll("line")
+  .data(d3Links)
+  .join("line")
+  .attr("class", d => "link " + d.type)
+  .attr("marker-end", d => `url(#arr-${d.type})`)
+  .style("opacity", 0.6);
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER NODES
+// ═══════════════════════════════════════════════════════════════
+const nodeEl = g.append("g").selectAll("g.node")
+  .data(filteredNodes)
+  .join("g")
+  .attr("class", d => "node e-" + d.era)
+  .call(
+    d3.drag()
+      .on("start", (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on("drag",  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on("end",   (e, d) => { if (!e.active) sim.alphaTarget(0); })
+  )
+  .on("click",     (e, d) => showPanel(d))
+  .on("mouseover", (e, d) => showTip(e, d))
+  .on("mousemove", e      => moveTip(e))
+  .on("mouseout",  ()     => hideTip());
+
+nodeEl.append("circle").attr("r", d => d.r);
+
+// Word-wrapped labels
+nodeEl.each(function(d) {
+  const el    = d3.select(this);
+  const chars = Math.floor((d.r * 1.6) / 5.5);
+  const words = d.name.split(" ");
+  const lines = [];
+  let cur = "";
+  words.forEach(w => {
+    const test = cur ? cur + " " + w : w;
+    if (test.length > chars && cur) { lines.push(cur); cur = w; }
+    else cur = test;
+  });
+  if (cur) lines.push(cur);
+  const trimmed = lines.slice(0, 3);
+  const lh = 10.5;
+  const start = -(trimmed.length - 1) * lh / 2;
+  const t = el.append("text").attr("class", "n-label");
+  trimmed.forEach((line, i) => {
+    t.append("tspan").attr("x", 0).attr("dy", i === 0 ? start : lh).text(line);
+  });
+});
+
+nodeEl.append("text")
+  .attr("class", "n-dates")
+  .attr("y", d => d.r + 10)
+  .text(d => d.dates);
+
+// ═══════════════════════════════════════════════════════════════
+//  TICK
+// ═══════════════════════════════════════════════════════════════
+sim.on("tick", () => {
+  linkEl
+    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+  nodeEl.attr("transform", d => `translate(${d.x},${d.y})`);
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  TOOLTIP
+// ═══════════════════════════════════════════════════════════════
+const tip = document.getElementById("tip");
+function showTip(e, d) {
+  tip.innerHTML = `<strong style="color:#e6edf3">${d.full || d.name}</strong><br>
+    <span style="color:${ERA_COLORS[d.era]}">${ERA_LABELS[d.era]}</span><br>
+    <em style="color:#56d364">${d.specialty}</em>`;
+  tip.style.display = "block";
+  moveTip(e);
+}
+function moveTip(e) {
+  const rect = container.getBoundingClientRect();
+  let x = e.clientX - rect.left + 14, y = e.clientY - rect.top + 14;
+  if (x + 250 > rect.width)  x = e.clientX - rect.left - 260;
+  if (y + 80  > rect.height) y = e.clientY - rect.top  - 90;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+// ═══════════════════════════════════════════════════════════════
+//  INFO PANEL
+// ═══════════════════════════════════════════════════════════════
+const panel = document.getElementById("info-panel");
+document.getElementById("close-btn").onclick = () => panel.classList.remove("vis");
+
+function showPanel(d) {
+  document.getElementById("ip-name").textContent      = d.name === d.full ? d.name : d.full || d.name;
+  document.getElementById("ip-full").textContent      = d.full !== d.name ? "" : "";
+  document.getElementById("ip-dates").textContent     = d.dates;
+  document.getElementById("ip-specialty").textContent = d.specialty;
+  document.getElementById("ip-note").textContent      = d.note;
+  document.getElementById("ip-era-badge").innerHTML   =
+    `<span class="era-badge" style="background:${ERA_COLORS[d.era]}22;border:1px solid ${ERA_COLORS[d.era]};color:${ERA_COLORS[d.era]}">${ERA_LABELS[d.era]}</span>`;
+
+  const connections = adj[d.id] || [];
+  if (!connections.length) {
+    document.getElementById("ip-conn").innerHTML = "";
+  } else {
+    const items = connections.map(a => {
+      const other = nodeMap[a.other];
+      if (!other) return "";
+      const badge = `<em class="ct ${a.type}">${TYPE_LABELS[a.type]}</em>`;
+      const line  = a.dir === "out"
+        ? `This figure ${badge} <strong>${other.full || other.name}</strong> (${other.dates})`
+        : `<strong>${other.full || other.name}</strong> (${other.dates}) — ${badge} this figure`;
+      return `<li>${line}<br><span style="color:#6e7681;font-size:0.7rem">${a.label}</span></li>`;
+    }).filter(Boolean).join("");
+    document.getElementById("ip-conn").innerHTML =
+      `<div class="ip-conn-title">Connections (${connections.length})</div><ul>${items}</ul>`;
+  }
+  panel.classList.add("vis");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ERA FILTER
+// ═══════════════════════════════════════════════════════════════
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const era = btn.dataset.era;
+    nodeEl.style("opacity", d => era === "all" || d.era === era ? 1 : 0.07);
+    linkEl.style("opacity", d => {
+      if (era === "all") return 0.6;
+      const se = typeof d.source === "object" ? d.source.era : nodeMap[d.source]?.era;
+      const te = typeof d.target === "object" ? d.target.era : nodeMap[d.target]?.era;
+      return (se === era || te === era) ? 0.85 : 0.03;
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  INITIAL VIEW
+// ═══════════════════════════════════════════════════════════════
+(function() {
+  const W = container.clientWidth, H = container.clientHeight;
+  svg.call(zoom.transform, d3.zoomIdentity.translate(W/2, H/2).scale(Math.min(W,H)/1600));
+})();
+</script>
+</body>
+</html>

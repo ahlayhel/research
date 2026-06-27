@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Human Evolution – Scientist Lineage Tree</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 30px 20px 60px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      color: #58a6ff;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8b949e;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 24px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Tree container ── */
+    .tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ── Nodes ── */
+    .node-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .node {
+      border-radius: 10px;
+      padding: 10px 16px;
+      min-width: 210px;
+      max-width: 280px;
+      text-align: center;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      cursor: default;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    .node .name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .node .dates {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: 1px;
+    }
+    .node .role {
+      font-size: 0.78rem;
+      font-style: italic;
+      margin-top: 4px;
+      opacity: 0.85;
+    }
+    .node .note {
+      font-size: 0.72rem;
+      margin-top: 4px;
+      opacity: 0.7;
+      line-height: 1.3;
+    }
+
+    /* ── Connector lines ── */
+    .connector-down {
+      width: 2px;
+      background: #30363d;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .connector-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      position: relative;
+    }
+    /* Horizontal bar spanning children */
+    .h-bar-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .h-bar {
+      height: 2px;
+      background: #30363d;
+      width: 100%;
+    }
+    .children-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .child-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .connector-up {
+      width: 2px;
+      background: #30363d;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    /* ── Discipline colours ── */
+    .nat-hist    { background: #1a2e1a; border-color: #2ea043; }
+    .geologist   { background: #1a1a2e; border-color: #388bfd; }
+    .biologist   { background: #1e2a1a; border-color: #56d364; }
+    .evol-bio    { background: #0d2230; border-color: #79c0ff; }
+    .genetics    { background: #2a1a2e; border-color: #bc8cff; }
+    .paleo-anth  { background: #2e1e0f; border-color: #d29922; }
+    .archaeol    { background: #2e1a1a; border-color: #f78166; }
+    .paleo-bio   { background: #1a2a2e; border-color: #76e3ea; }
+    .mol-bio     { background: #2e2a0d; border-color: #e3b341; }
+    .genomics    { background: #1a0d2e; border-color: #db61a2; }
+    .anthro      { background: #2a1f10; border-color: #c9843e; }
+    .primatol    { background: #0d2e1e; border-color: #3fb950; }
+    .neuro       { background: #1e1e2e; border-color: #a5a5ff; }
+
+    /* ── Section separators ── */
+    .section-label {
+      margin: 50px 0 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #58a6ff;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 6px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    /* ── Scrollable wide container ── */
+    .wide {
+      overflow-x: auto;
+      width: 100%;
+    }
+    .tree-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 900px;
+      padding: 10px 20px 20px;
+    }
+
+    /* ── Small note cards for cross-links ── */
+    .cross-links {
+      max-width: 960px;
+      margin: 40px auto 0;
+      padding: 20px;
+      background: #161b22;
+      border-radius: 10px;
+      border: 1px solid #21262d;
+    }
+    .cross-links h2 {
+      color: #58a6ff;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+    .cross-links ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .cross-links ul li::before {
+      content: "↔ ";
+      color: #8b949e;
+    }
+    .cross-links ul li {
+      font-size: 0.83rem;
+      color: #c9d1d9;
+      line-height: 1.4;
+    }
+    strong { color: #e6edf3; }
+  </style>
+</head>
+<body>
+
+<h1>Human Evolution — Scientist Lineage Tree</h1>
+<p class="subtitle">
+  Lines show intellectual descent: teacher → student, direct collaboration, or documented influence.
+  Hover nodes for details. Scroll right on narrow screens.
+</p>
+
+<!-- ═══════════════════════ LEGEND ═══════════════════════ -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#2ea043"></div>Natural Historian</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#388bfd"></div>Geologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#56d364"></div>Biologist / Zoologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#79c0ff"></div>Evolutionary Biologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bc8cff"></div>Geneticist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div>Paleoanthropologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f78166"></div>Archaeologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#76e3ea"></div>Paleobiologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div>Molecular Biologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#db61a2"></div>Genomicist / Ancient DNA</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c9843e"></div>Physical Anthropologist</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Primatologist</div>
+</div>
+
+<!-- ═══════════════════════ TREE ═══════════════════════ -->
+<div class="wide">
+<div class="tree-grid">
+
+<!--
+  ████████████████████████████████
+  TRUNK 1 – THE DARWIN / HUXLEY ROOT
+  ████████████████████████████████
+-->
+<div class="section-label">I · The Darwin–Huxley Foundation (1800s)</div>
+
+<!-- ROOT -->
+<div class="node-wrapper">
+  <div class="node nat-hist">
+    <div class="name">Charles Darwin</div>
+    <div class="dates">1809 – 1882</div>
+    <div class="role">Natural Historian / Evolutionary Theorist</div>
+    <div class="note">On the Origin of Species (1859); The Descent of Man (1871) — proposed common ancestry of humans &amp; apes</div>
+  </div>
+</div>
+<div class="connector-down"></div>
+
+<!-- Children of Darwin -->
+<div class="children-row">
+
+  <!-- Branch: Huxley -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node biologist">
+      <div class="name">Thomas Henry Huxley</div>
+      <div class="dates">1825 – 1895</div>
+      <div class="role">Biologist / Comparative Anatomist</div>
+      <div class="note">"Darwin's Bulldog"; Evidence as to Man's Place in Nature (1863)</div>
+    </div>
+    <div class="connector-down"></div>
+    <!-- Huxley's students -->
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node biologist">
+          <div class="name">Ernst Haeckel</div>
+          <div class="dates">1834 – 1919</div>
+          <div class="role">Biologist / Naturalist</div>
+          <div class="note">Coined "Anthropogeny"; recapitulation theory; drew first phylogenetic trees of humans; influenced by Darwin &amp; Huxley</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node nat-hist">
+          <div class="name">William H. Flower</div>
+          <div class="dates">1831 – 1899</div>
+          <div class="role">Comparative Anatomist / Museum Curator</div>
+          <div class="note">Mentored Arthur Keith; director of Natural History Museum London</div>
+        </div>
+        <div class="connector-down"></div>
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node paleo-anth">
+            <div class="name">Arthur Keith</div>
+            <div class="dates">1866 – 1955</div>
+            <div class="role">Paleoanthropologist / Anatomist</div>
+            <div class="note">Analysed Neanderthal anatomy; championed Piltdown (later fraud); trained generation of UK anatomists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Branch: Lyell -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node geologist">
+      <div class="name">Charles Lyell</div>
+      <div class="dates">1797 – 1875</div>
+      <div class="role">Geologist</div>
+      <div class="note">Uniformitarianism; Geological Evidences of the Antiquity of Man (1863); mentor &amp; close colleague of Darwin</div>
+    </div>
+  </div>
+
+  <!-- Branch: Wallace -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node biologist">
+      <div class="name">Alfred Russel Wallace</div>
+      <div class="dates">1823 – 1913</div>
+      <div class="role">Naturalist / Evolutionary Biologist</div>
+      <div class="note">Co-discovered natural selection; biogeography; influenced Dobzhansky's geographic speciation thinking</div>
+    </div>
+  </div>
+
+  <!-- Branch: Mendel -->
+  <div class="child-col">
+    <div class="connector-up"></div>
+    <div class="node genetics">
+      <div class="name">Gregor Mendel</div>
+      <div class="dates">1822 – 1884</div>
+      <div class="role">Geneticist (Monk / Botanist)</div>
+      <div class="note">Laws of heredity; rediscovered 1900; foundation for genetics arm of evolution</div>
+    </div>
+  </div>
+
+</div><!-- /children of Darwin -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!--
+  ████████████████████████████████
+  TRUNK 2 – EARLY 20th CENTURY
+  ████████████████████████████████
+-->
+<div class="section-label">II · Early Fossil Hunters &amp; The Genetics Bridge (1890s–1930s)</div>
+
+<div class="children-row">
+
+  <!-- Dubois -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Eugène Dubois</div>
+      <div class="dates">1858 – 1940</div>
+      <div class="role">Paleoanthropologist / Anatomist</div>
+      <div class="note">Discovered Homo erectus (Java Man, 1891); first hominid fossil hunter; inspired by Haeckel's "missing link"</div>
+    </div>
+  </div>
+
+  <!-- Raymond Dart -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Raymond Dart</div>
+      <div class="dates">1893 – 1988</div>
+      <div class="role">Paleoanthropologist / Anatomist</div>
+      <div class="note">Described Taung Child (Australopithecus africanus, 1925); trained under Arthur Keith; trained Philip Tobias</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node paleo-anth">
+        <div class="name">Philip Tobias</div>
+        <div class="dates">1925 – 2012</div>
+        <div class="role">Paleoanthropologist</div>
+        <div class="note">Dart's student; described Homo habilis with Leakey &amp; Napier; Sterkfontein excavations; trained many S. African paleoanthropologists</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Davidson Black -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Davidson Black</div>
+      <div class="dates">1884 – 1934</div>
+      <div class="role">Paleoanthropologist / Anatomist</div>
+      <div class="note">Identified Peking Man (Sinanthropus, 1927); Zhoukoudian excavations</div>
+    </div>
+  </div>
+
+  <!-- Fisher / Modern Synthesis bridge -->
+  <div class="child-col">
+    <div class="node genetics">
+      <div class="name">Ronald A. Fisher</div>
+      <div class="dates">1890 – 1962</div>
+      <div class="role">Population Geneticist / Statistician</div>
+      <div class="note">The Genetical Theory of Natural Selection (1930); synthesised Mendelism with Darwinism; influenced Dobzhansky directly</div>
+    </div>
+  </div>
+
+  <!-- Sewall Wright -->
+  <div class="child-col">
+    <div class="node genetics">
+      <div class="name">Sewall Wright</div>
+      <div class="dates">1889 – 1988</div>
+      <div class="role">Population Geneticist</div>
+      <div class="note">Genetic drift; adaptive landscapes; influenced Dobzhansky's views on small populations</div>
+    </div>
+  </div>
+
+  <!-- J.B.S. Haldane -->
+  <div class="child-col">
+    <div class="node genetics">
+      <div class="name">J.B.S. Haldane</div>
+      <div class="dates">1892 – 1964</div>
+      <div class="role">Population Geneticist / Biochemist</div>
+      <div class="note">The Causes of Evolution (1932); with Fisher &amp; Wright formed the mathematical Modern Synthesis triad; estimated mutation rates</div>
+    </div>
+  </div>
+
+</div><!-- /trunk 2 row -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!--
+  ████████████████████████████████
+  TRUNK 3 – MODERN SYNTHESIS & THE LEAKEY DYNASTY
+  ████████████████████████████████
+-->
+<div class="section-label">III · Modern Synthesis &amp; The Leakey Dynasty (1930s–1970s)</div>
+
+<div class="children-row">
+
+  <!-- Dobzhansky subtree -->
+  <div class="child-col">
+    <div class="node evol-bio">
+      <div class="name">Theodosius Dobzhansky</div>
+      <div class="dates">1900 – 1975</div>
+      <div class="role">Evolutionary Biologist / Geneticist</div>
+      <div class="note">Genetics and the Origin of Species (1937) — cornerstone of Modern Synthesis; student of Thomas Hunt Morgan; mentored Francisco Ayala &amp; Richard Lewontin</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node evol-bio">
+          <div class="name">Francisco Ayala</div>
+          <div class="dates">1934 – 2023</div>
+          <div class="role">Evolutionary Biologist / Geneticist</div>
+          <div class="note">Dobzhansky's doctoral student; molecular clock work on human evolution; diversity in Plasmodium applied to human origins</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node genetics">
+          <div class="name">Richard Lewontin</div>
+          <div class="dates">1929 – 2021</div>
+          <div class="role">Population Geneticist</div>
+          <div class="note">Dobzhansky's student; applied electrophoresis to human genetic variation; "Lewontin's Fallacy" debates on race</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ernst Mayr -->
+  <div class="child-col">
+    <div class="node evol-bio">
+      <div class="name">Ernst Mayr</div>
+      <div class="dates">1904 – 2005</div>
+      <div class="role">Evolutionary Biologist / Ornithologist</div>
+      <div class="note">Systematics and the Origin of Species (1942); biological species concept; influenced lumper/splitter debates on Homo taxonomy</div>
+    </div>
+  </div>
+
+  <!-- G.G. Simpson -->
+  <div class="child-col">
+    <div class="node paleo-bio">
+      <div class="name">George Gaylord Simpson</div>
+      <div class="dates">1902 – 1984</div>
+      <div class="role">Paleobiologist</div>
+      <div class="note">Tempo and Mode in Evolution (1944); brought paleontology into Modern Synthesis; influenced Stephen Jay Gould</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node paleo-bio">
+        <div class="name">Stephen Jay Gould</div>
+        <div class="dates">1941 – 2002</div>
+        <div class="role">Paleobiologist / Evolutionary Theorist</div>
+        <div class="note">Punctuated equilibrium (with Eldredge); The Mismeasure of Man; popularised human evolution; influenced by Simpson &amp; Mayr</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- L.S.B. Leakey dynasty -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Louis S.B. Leakey</div>
+      <div class="dates">1903 – 1972</div>
+      <div class="role">Paleoanthropologist / Archaeologist</div>
+      <div class="note">Olduvai Gorge excavations; co-discovered Zinjanthropus &amp; Homo habilis; championed Africa as cradle of humanity; mentored Goodall, Fossey, Galdikas ("Trimates")</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <!-- Mary Leakey -->
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node archaeol">
+          <div class="name">Mary Leakey</div>
+          <div class="dates">1913 – 1996</div>
+          <div class="role">Archaeologist / Paleoanthropologist</div>
+          <div class="note">Louis's wife &amp; co-excavator; discovered Proconsul skull; Laetoli footprints (3.6 Mya); described Australopithecus boisei</div>
+        </div>
+        <div class="connector-down"></div>
+        <!-- Richard Leakey -->
+        <div class="child-col">
+          <div class="connector-up"></div>
+          <div class="node paleo-anth">
+            <div class="name">Richard Leakey</div>
+            <div class="dates">1944 – 2022</div>
+            <div class="role">Paleoanthropologist / Conservationist</div>
+            <div class="note">Son of Louis &amp; Mary; Lake Turkana fossils; KNM-ER 1470 (Homo rudolfensis); National Museums of Kenya; mentored Meave Leakey</div>
+          </div>
+          <div class="connector-down"></div>
+          <div class="child-col">
+            <div class="connector-up"></div>
+            <div class="node paleo-anth">
+              <div class="name">Meave Leakey</div>
+              <div class="dates">b. 1942</div>
+              <div class="role">Paleoanthropologist</div>
+              <div class="note">Richard's wife; Kenyanthropus platyops; West Turkana; co-directs Leakey Foundation; trained Louise Leakey</div>
+            </div>
+            <div class="connector-down"></div>
+            <div class="child-col">
+              <div class="connector-up"></div>
+              <div class="node paleo-anth">
+                <div class="name">Louise Leakey</div>
+                <div class="dates">b. 1972</div>
+                <div class="role">Paleoanthropologist</div>
+                <div class="note">4th Leakey generation; Turkana Basin fieldwork; public outreach; Leakey Foundation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Goodall / Primatology branch -->
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node primatol">
+          <div class="name">Jane Goodall</div>
+          <div class="dates">b. 1934</div>
+          <div class="role">Primatologist / Ethologist</div>
+          <div class="note">Sent to Gombe by L.S.B. Leakey; tool use in chimps; transformed understanding of human uniqueness</div>
+        </div>
+      </div>
+      <!-- Fossey -->
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node primatol">
+          <div class="name">Dian Fossey</div>
+          <div class="dates">1932 – 1985</div>
+          <div class="role">Primatologist</div>
+          <div class="note">Sent to Rwanda by L.S.B. Leakey; mountain gorilla behaviour; Gorillas in the Mist</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Washburn / New Physical Anthropology -->
+  <div class="child-col">
+    <div class="node anthro">
+      <div class="name">Sherwood Washburn</div>
+      <div class="dates">1911 – 2000</div>
+      <div class="role">Physical Anthropologist</div>
+      <div class="note">"New Physical Anthropology" (1951); integrated primate behaviour with fossil record; trained Irven DeVore, Adrienne Zihlman, Dean Falk</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node anthro">
+          <div class="name">Adrienne Zihlman</div>
+          <div class="dates">b. 1940</div>
+          <div class="role">Physical Anthropologist</div>
+          <div class="note">Washburn's student; "woman the gatherer" hypothesis; bipedalism &amp; body proportions</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node anthro">
+          <div class="name">Dean Falk</div>
+          <div class="dates">b. 1944</div>
+          <div class="role">Paleoneurologist / Physical Anthropologist</div>
+          <div class="note">Washburn lineage; brain evolution, endocasts; "radiator hypothesis"; Flores hobbit brain</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /trunk 3 -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!--
+  ████████████████████████████████
+  TRUNK 4 – MOLECULAR CLOCK & FOSSIL BOOM (1960s–1990s)
+  ████████████████████████████████
+-->
+<div class="section-label">IV · Molecular Clock, Fossil Boom &amp; Cladistics (1960s–1990s)</div>
+
+<div class="children-row">
+
+  <!-- Zuckerkandl & Pauling -->
+  <div class="child-col">
+    <div class="node mol-bio">
+      <div class="name">Linus Pauling</div>
+      <div class="dates">1901 – 1994</div>
+      <div class="role">Biochemist / Molecular Biologist</div>
+      <div class="note">With Zuckerkandl proposed molecular clock (1962); sickle-cell as molecular disease; laid groundwork for molecular anthropology</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node mol-bio">
+        <div class="name">Emile Zuckerkandl</div>
+        <div class="dates">1922 – 2013</div>
+        <div class="role">Molecular Biologist / Evolutionary Geneticist</div>
+        <div class="note">Co-invented molecular clock; haemoglobin sequences to date human–chimp split</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sarich & Wilson -->
+  <div class="child-col">
+    <div class="node mol-bio">
+      <div class="name">Allan Wilson</div>
+      <div class="dates">1934 – 1991</div>
+      <div class="role">Molecular Biologist / Evolutionary Geneticist</div>
+      <div class="note">UC Berkeley; with Sarich dated human–chimp split at ~5 Mya (1967); "Mitochondrial Eve" paper (1987) with Cann &amp; Stoneking; trained Svante Pääbo</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node mol-bio">
+          <div class="name">Vincent Sarich</div>
+          <div class="dates">1934 – 2012</div>
+          <div class="role">Molecular Anthropologist</div>
+          <div class="note">Wilson's collaborator; immunological dating of human–ape divergence; challenged fossil-based timelines</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node genomics">
+          <div class="name">Rebecca Cann</div>
+          <div class="dates">b. 1951</div>
+          <div class="role">Molecular Anthropologist / Geneticist</div>
+          <div class="note">Wilson's student; mtDNA "Mitochondrial Eve" (1987); Out-of-Africa genetic evidence</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node genomics">
+          <div class="name">Svante Pääbo</div>
+          <div class="dates">b. 1955</div>
+          <div class="role">Evolutionary Genomicist / Ancient DNA Pioneer</div>
+          <div class="note">Wilson's postdoc lab; first ancient DNA from Egyptian mummy; Neanderthal genome (2010); Denisovan discovery; Nobel Prize 2022; founded Max Planck Dept of Evolutionary Anthropology; trained Johannes Krause, Qiaomei Fu, Kay Prüfer, Johannes Krause</div>
+        </div>
+        <div class="connector-down"></div>
+        <div class="children-row">
+          <div class="child-col">
+            <div class="connector-up"></div>
+            <div class="node genomics">
+              <div class="name">Johannes Krause</div>
+              <div class="dates">b. 1980</div>
+              <div class="role">Archaeogeneticist</div>
+              <div class="note">Pääbo's student; co-identified Denisovans; ancient pathogen genomics; Director, MPI-EVA</div>
+            </div>
+          </div>
+          <div class="child-col">
+            <div class="connector-up"></div>
+            <div class="node genomics">
+              <div class="name">Qiaomei Fu</div>
+              <div class="dates">b. 1985</div>
+              <div class="role">Archaeogeneticist</div>
+              <div class="note">Pääbo's student; early modern human genomes from China; Tianyuan Cave; introgression studies</div>
+            </div>
+          </div>
+          <div class="child-col">
+            <div class="connector-up"></div>
+            <div class="node genomics">
+              <div class="name">Kay Prüfer</div>
+              <div class="dates">b. ~1975</div>
+              <div class="role">Computational Biologist / Genomicist</div>
+              <div class="note">Pääbo's group; bonobo genome; high-coverage Neanderthal sequence; PSMC divergence methods</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donald Johanson / "Lucy" -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Donald Johanson</div>
+      <div class="dates">b. 1943</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">Discovered "Lucy" (A. afarensis, 1974, Hadar Ethiopia); influenced by the Leakey tradition; founded Institute of Human Origins; longtime collaborator with Tim White</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node paleo-anth">
+        <div class="name">Tim White</div>
+        <div class="dates">b. 1950</div>
+        <div class="role">Paleoanthropologist</div>
+        <div class="note">Johanson's collaborator; Ardipithecus ramidus (1994, "Ardi"); Middle Awash project; trained many UC-Berkeley students</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bernard Wood -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Bernard Wood</div>
+      <div class="dates">b. 1945</div>
+      <div class="role">Paleoanthropologist / Hominid Taxonomist</div>
+      <div class="note">Trained under Michael Day (who worked with the Leakeys); Lake Turkana fossil analyses; revised Homo taxonomy; Wiley-Blackwell Encyclopedia of Human Evolution; George Washington Univ; trained Mark Collard, David Strait, and others</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="children-row">
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node paleo-anth">
+          <div class="name">Mark Collard</div>
+          <div class="dates">b. 1968</div>
+          <div class="role">Paleoanthropologist / Evolutionary Anthropologist</div>
+          <div class="note">Wood's student; cladistic analysis of hominins; cultural evolution quantification</div>
+        </div>
+      </div>
+      <div class="child-col">
+        <div class="connector-up"></div>
+        <div class="node paleo-anth">
+          <div class="name">David Strait</div>
+          <div class="dates">b. ~1970</div>
+          <div class="role">Paleoanthropologist / Functional Morphologist</div>
+          <div class="note">Wood's student; Australopithecus facial biomechanics; finite element analysis in skulls</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chris Stringer -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Chris Stringer</div>
+      <div class="dates">b. 1947</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">Natural History Museum London; champion of Out-of-Africa (Recent African Origin) model; Neanderthal–modern human relations; co-authored African Exodus (1996)</div>
+    </div>
+  </div>
+
+  <!-- Milford Wolpoff / Multiregional -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Milford Wolpoff</div>
+      <div class="dates">b. 1942</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">University of Michigan; leading proponent of Multiregional Evolution hypothesis (counterpoint to Out-of-Africa); extensive fossil metric analysis</div>
+    </div>
+  </div>
+
+</div><!-- /trunk 4 -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!--
+  ████████████████████████████████
+  TRUNK 5 – GENOMICS ERA (1990s–present)
+  ████████████████████████████████
+-->
+<div class="section-label">V · Genomics Era &amp; New Fossil Discoveries (1990s–present)</div>
+
+<div class="children-row">
+
+  <!-- Reich -->
+  <div class="child-col">
+    <div class="node genomics">
+      <div class="name">David Reich</div>
+      <div class="dates">b. 1974</div>
+      <div class="role">Population Geneticist / Ancient DNA Researcher</div>
+      <div class="note">Harvard; large-scale ancient DNA; confirmed Neanderthal admixture in non-Africans (2010); Who We Are and How We Got Here (2018); trained by Pääbo collaboration; trained Nick Patterson</div>
+    </div>
+    <div class="connector-down"></div>
+    <div class="child-col">
+      <div class="connector-up"></div>
+      <div class="node genomics">
+        <div class="name">Nick Patterson</div>
+        <div class="dates">b. 1948</div>
+        <div class="role">Computational Geneticist</div>
+        <div class="note">Reich's close collaborator; ADMIXTOOLS; D-statistics for detecting admixture in ancient populations</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Eske Willerslev -->
+  <div class="child-col">
+    <div class="node genomics">
+      <div class="name">Eske Willerslev</div>
+      <div class="dates">b. 1971</div>
+      <div class="role">Evolutionary Geneticist / Ancient DNA Researcher</div>
+      <div class="note">Univ of Copenhagen / Cambridge; ancient sediment DNA; first ancient Native American genome (Anzick-1); peopling of the Americas</div>
+    </div>
+  </div>
+
+  <!-- Lee Berger -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Lee Berger</div>
+      <div class="dates">b. 1965</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">Wits Univ / Nat. Geographic Explorer; Australopithecus sediba (2010); Homo naledi (2015, Rising Star Cave); open-access fossil data model</div>
+    </div>
+  </div>
+
+  <!-- Ann Gibbons / science communication node (included as bridge) -->
+
+  <!-- Zeresenay Alemseged -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Zeresenay Alemseged</div>
+      <div class="dates">b. 1969</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">Univ of Chicago; Dikika Child (A. afarensis infant, 2000); Hadar / Afar fieldwork; inspired by Johanson's discoveries</div>
+    </div>
+  </div>
+
+  <!-- Yohannes Haile-Selassie -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Yohannes Haile-Selassie</div>
+      <div class="dates">b. 1961</div>
+      <div name="role">Paleoanthropologist</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">CMNH / Case Western; Ardipithecus kadabba; MRD cranium of A. anamensis (2019); collaborates with Tim White's Middle Awash group</div>
+    </div>
+  </div>
+
+  <!-- Henry Gee -->
+  <div class="child-col">
+    <div class="node paleo-bio">
+      <div class="name">Henry Gee</div>
+      <div class="dates">b. 1962</div>
+      <div class="role">Paleobiologist / Science Editor</div>
+      <div class="note">Nature editor; In Search of Deep Time; cladistic rigour in hominin taxonomy; influenced by Gould &amp; Stringer</div>
+    </div>
+  </div>
+
+  <!-- Pontus Skoglund -->
+  <div class="child-col">
+    <div class="node genomics">
+      <div class="name">Pontus Skoglund</div>
+      <div class="dates">b. 1985</div>
+      <div class="role">Archaeogeneticist</div>
+      <div class="note">Crick Institute; ancient DNA of Africa &amp; early Holocene populations; trained in Reich / Willerslev tradition</div>
+    </div>
+  </div>
+
+  <!-- Wolfgang Enard -->
+  <div class="child-col">
+    <div class="node genomics">
+      <div class="name">Wolfgang Enard</div>
+      <div class="dates">b. 1974</div>
+      <div class="role">Evolutionary Geneticist</div>
+      <div class="note">Pääbo's student/postdoc; FOXP2 language gene in Neanderthals &amp; modern humans (2002); LMU Munich</div>
+    </div>
+  </div>
+
+</div><!-- /trunk 5 -->
+
+<div class="connector-down" style="height:40px"></div>
+
+<!--
+  ████████████████████████████████
+  TRUNK 6 – SPECIALISTS & CROSS-DISCIPLINARY BRIDGES
+  ████████████████████████████████
+-->
+<div class="section-label">VI · Specialist Branches &amp; Cross-Disciplinary Bridges</div>
+
+<div class="children-row">
+
+  <!-- Klein – archaeology -->
+  <div class="child-col">
+    <div class="node archaeol">
+      <div class="name">Richard Klein</div>
+      <div class="dates">b. 1941</div>
+      <div class="role">Archaeologist / Paleoanthropologist</div>
+      <div class="note">Stanford; The Human Career; "behavioral modernity" and the cognitive revolution ~50 kya; influenced by Leakey tradition &amp; Washburn</div>
+    </div>
+  </div>
+
+  <!-- McBrearty & Brooks -->
+  <div class="child-col">
+    <div class="node archaeol">
+      <div class="name">Sally McBrearty</div>
+      <div class="dates">b. ~1955</div>
+      <div class="role">Archaeologist</div>
+      <div class="note">Univ of Connecticut; with Alison Brooks challenged Klein's "revolution" — proposed gradual African modernity (2000); Middle Stone Age research</div>
+    </div>
+  </div>
+
+  <!-- Wynn & Coolidge – cognition -->
+  <div class="child-col">
+    <div class="node neuro">
+      <div class="name">Thomas Wynn</div>
+      <div class="dates">b. 1949</div>
+      <div class="role">Cognitive Archaeologist</div>
+      <div class="note">Univ of Colorado; stone tool cognition; Piagetian analysis of Acheulean tools; working memory &amp; sapient paradox</div>
+    </div>
+  </div>
+
+  <!-- Niles Eldredge -->
+  <div class="child-col">
+    <div class="node paleo-bio">
+      <div class="name">Niles Eldredge</div>
+      <div class="dates">b. 1943</div>
+      <div class="role">Paleobiologist</div>
+      <div class="note">AMNH; with Gould proposed punctuated equilibrium (1972); trilobite expert; challenged gradualism in hominid fossil record</div>
+    </div>
+  </div>
+
+  <!-- Loring Brace – metric anthropology -->
+  <div class="child-col">
+    <div class="node anthro">
+      <div class="name">C. Loring Brace</div>
+      <div class="dates">1930 – 2019</div>
+      <div class="role">Physical Anthropologist</div>
+      <div class="note">Univ of Michigan (Wolpoff's dept); metric dental evolution; challenged typological species concepts; dental reduction hypothesis</div>
+    </div>
+  </div>
+
+  <!-- William Howells -->
+  <div class="child-col">
+    <div class="node anthro">
+      <div class="name">William W. Howells</div>
+      <div class="dates">1908 – 2005</div>
+      <div class="role">Physical Anthropologist</div>
+      <div class="note">Harvard; skull measurement databases (Howells Data); Getting Here (1993); trained a generation of morphometric analysts</div>
+    </div>
+  </div>
+
+  <!-- Ian Tattersall -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Ian Tattersall</div>
+      <div class="dates">b. 1945</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">AMNH; The Fossil Trail; splitter in hominin taxonomy; symbolism &amp; language origin; influenced by Eldredge &amp; Gould</div>
+    </div>
+  </div>
+
+  <!-- Fred Smith -->
+  <div class="child-col">
+    <div class="node paleo-anth">
+      <div class="name">Fred H. Smith</div>
+      <div class="dates">b. 1946</div>
+      <div class="role">Paleoanthropologist</div>
+      <div class="note">Assimilation model of modern human origins (between multiregional &amp; replacement); Central European Neanderthals</div>
+    </div>
+  </div>
+
+</div><!-- /trunk 6 -->
+
+</div><!-- /tree-grid -->
+</div><!-- /wide -->
+
+<!-- ═══════════════════════ CROSS-LINKS ═══════════════════════ -->
+<div class="cross-links">
+  <h2>Notable Cross-Branch Connections &amp; Intellectual Debts</h2>
+  <ul>
+    <li><strong>Dobzhansky → Mayr → Simpson</strong>: The three architects of the Modern Synthesis each read and cited each other extensively, uniting genetics, systematics, and the fossil record.</li>
+    <li><strong>L.S.B. Leakey → Philip Tobias</strong>: Leakey and Tobias jointly described <em>Homo habilis</em> (1964) with John Napier, bridging the Dart school (S. Africa) and the Leakey school (E. Africa).</li>
+    <li><strong>Allan Wilson → Svante Pääbo</strong>: Pääbo visited Wilson's Berkeley lab in the 1980s; Wilson's mtDNA methods directly inspired Pääbo's ancient DNA extraction protocols.</li>
+    <li><strong>Richard Leakey ↔ Donald Johanson</strong>: Famous rivals; debated <em>Homo habilis</em> taxonomy and the shape of the hominin bush throughout the 1970s–80s, driving the field forward.</li>
+    <li><strong>Bernard Wood ↔ Chris Stringer</strong>: Both at Natural History Museum London at overlapping periods; Wood's taxonomic work on Turkana fossils informed Stringer's Out-of-Africa model.</li>
+    <li><strong>Gould &amp; Eldredge → Tattersall</strong>: Tattersall adopted punctuated equilibrium as a framework for interpreting the discontinuous hominin fossil record.</li>
+    <li><strong>Tim White ↔ Donald Johanson</strong>: White co-authored the formal description of <em>A. afarensis</em> (1978) with Johanson, though they later separated scientifically; White's <em>Ardipithecus</em> work extended the Johanson tradition deeper in time.</li>
+    <li><strong>David Reich ↔ Svante Pääbo</strong>: Reich's lab provided key statistical tools (ADMIXTOOLS) used in the Neanderthal Genome Project, making the collaboration essential for proving admixture.</li>
+    <li><strong>Sewall Wright → Dobzhansky → Ayala</strong>: A three-generation chain linking mathematical population genetics to empirical evolutionary biology and molecular anthropology.</li>
+    <li><strong>Mary Leakey → Tim White</strong>: White worked as a student researcher at Laetoli under Mary Leakey's supervision (mid-1970s), where he studied hominin footprints.</li>
+    <li><strong>Washburn → DeVore → sociobiology</strong>: Sherwood Washburn's student Irven DeVore pioneered primate sociobiology, which influenced E.O. Wilson and the later debate on human behavioural evolution.</li>
+  </ul>
+</div>
+
+</body>
+</html>
