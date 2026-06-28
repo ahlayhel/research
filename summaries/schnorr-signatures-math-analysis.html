@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Analysis: Schnorr Identification &amp; Signatures (1989)</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 900px; margin: 40px auto; padding: 0 24px; line-height: 1.7; color: #1a1a1a; background: #fafafa; }
+    h1 { font-size: 1.6rem; border-bottom: 2px solid #333; padding-bottom: 8px; }
+    h2 { font-size: 1.25rem; margin-top: 2rem; color: #2c3e50; border-left: 4px solid #2c3e50; padding-left: 10px; }
+    h3 { font-size: 1rem; margin-top: 1.2rem; color: #555; }
+    .meta { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .formula-box { background: #f0f4f8; border: 1px solid #c8d6e5; border-radius: 6px; padding: 14px 18px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 0.97rem; }
+    .formula-box p { margin: 6px 0; }
+    .prereq-list li { margin-bottom: 6px; }
+    .plain-box { background: #fffbe6; border-left: 4px solid #f0c040; padding: 14px 18px; border-radius: 4px; margin: 10px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92rem; }
+    th { background: #2c3e50; color: white; padding: 8px 12px; text-align: left; }
+    td { border: 1px solid #ccc; padding: 8px 12px; }
+    tr:nth-child(even) { background: #f7f7f7; }
+    code { background: #e8e8e8; padding: 2px 5px; border-radius: 3px; font-size: 0.92em; }
+  </style>
+</head>
+<body>
+
+<h1>Math Analysis: Efficient Identification and Signatures for Smart Cards</h1>
+<div class="meta">
+  <strong>Author:</strong> C.P. Schnorr &nbsp;|&nbsp;
+  <strong>Venue:</strong> CRYPTO 1989, LNCS 435, pp. 239–252 &nbsp;|&nbsp;
+  <strong>Template:</strong> math.md
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Summary</h2>
+<p>
+  The paper's core mathematical contribution is a <strong>discrete-logarithm-based identification and signature scheme</strong> built on three interlocking ideas:
+</p>
+<ol>
+  <li>
+    <strong>Schnorr identification (3-move Σ-protocol).</strong> A prover holds secret key <em>s</em> and convinces a verifier it knows <em>s</em> without revealing it. Security reduces to the discrete-logarithm problem in a prime-order subgroup of Z<sub>p</sub><sup>*</sup>.
+  </li>
+  <li>
+    <strong>Fiat-Shamir transform applied to the protocol.</strong> The interactive challenge is replaced by a hash of the transcript, turning the identification proof into a non-interactive signature scheme. This is the first use of this transform in the discrete-log setting.
+  </li>
+  <li>
+    <strong>Preprocessing algorithm for random exponentiation.</strong> Smart cards are computationally weak. The paper introduces a preprocessing method based on <em>local randomization</em> (independent consecutive outputs) and <em>internal randomization</em> (random index selection), analyzed via linear algebra over Z<sub>q</sub>, that lets the card precompute the expensive modular exponentiation during idle time.
+  </li>
+</ol>
+<p>
+  Security of the identification step is proved via a rewinding / forking argument. Security of the preprocessing is established by information-theoretic arguments — specifically by showing that the linear transformation matrix over Z<sub>q</sub> is invertible (non-zero determinant mod q), which preserves the uniform distribution on stored random values.
+</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Prerequisites</h2>
+<ul class="prereq-list">
+  <li><strong>Number theory</strong> — modular arithmetic, prime numbers, multiplicative inverses mod p</li>
+  <li><strong>Probability theory</strong> — uniform distributions, negligible functions, probability of success in randomized algorithms</li>
+  <li><strong>Abstract algebra</strong> — cyclic groups, group order, prime-order subgroups</li>
+  <li><strong>Linear algebra</strong> — vectors, matrices, invertibility, determinants</li>
+  <li><strong>Complexity theory</strong> — polynomial-time algorithms, security parameters, the notion of "negligible" advantage</li>
+  <li><strong>Cryptographic foundations</strong> — one-way functions, hash functions, public/private key concepts</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Advanced Prerequisites</h2>
+<ul class="prereq-list">
+  <li><strong>Discrete logarithm problem (number theory)</strong> — Given g, p, and y = g<sup>x</sup> mod p, finding x is computationally hard. The entire scheme's security rests on this assumption.</li>
+  <li><strong>Cyclic subgroups of Z<sub>p</sub><sup>*</sup> (abstract algebra)</strong> — Choosing a base α of prime order q in Z<sub>p</sub><sup>*</sup>, where q | p−1. All exponentiations live in this order-q subgroup.</li>
+  <li><strong>Baby-step giant-step algorithm (number theory / algorithms)</strong> — The meet-in-the-middle attack that solves the discrete log in O(√q) steps, which dictates the required bit length of q (≥ 140 bits).</li>
+  <li><strong>Linear transformations over Z<sub>q</sub> (linear algebra)</strong> — The preprocessing is analyzed by expressing each round as a matrix multiplication mod q. Invertibility of these matrices (det ≠ 0 mod q) is the key to the security proof.</li>
+  <li><strong>Σ-protocols and rewinding (interactive proof theory)</strong> — The security of the identification step is proved by showing that two accepting transcripts with the same commitment but different challenges can be combined to extract the discrete log — a "forking lemma" argument.</li>
+  <li><strong>Fiat-Shamir heuristic (random oracle model)</strong> — Replacing the verifier's random challenge with a hash output to convert an interactive proof into a signature scheme.</li>
+  <li><strong>Information-theoretic security (probability / information theory)</strong> — The preprocessing preserves uniform distributions not by computational hardness but by the algebraic structure (invertible linear maps), which is a stronger, unconditional guarantee.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Formula</h2>
+<p>All equations below use clean math symbols with no LaTeX markup.</p>
+
+<h3>System Parameters</h3>
+<div class="formula-box">
+  <p>p, q : primes with q | p−1,  q ≥ 2¹⁴⁰,  p ≥ 2⁵¹²</p>
+  <p>α ∈ Zₚ with order q :  αq ≡ 1 (mod p),  α ≠ 1</p>
+  <p>h : Zₚ × Z → {0, …, 2ᵗ − 1}   (one-way hash function, t ≈ 72)</p>
+</div>
+
+<h3>Key Generation</h3>
+<div class="formula-box">
+  <p>Private key:  s ∈ {1, 2, …, q}   (random)</p>
+  <p>Public key:   v = α⁻ˢ (mod p)</p>
+  <p>Relation:     s = log_α(v⁻¹)   (the discrete log of v⁻¹ base α)</p>
+</div>
+
+<h3>Identification Protocol (3 moves)</h3>
+<div class="formula-box">
+  <p>Step 1 (Prover → Verifier):   pick r ∈ {1, …, q−1};   send  x := αʳ (mod p)</p>
+  <p>Step 2 (Verifier → Prover):   send challenge  e ∈ {0, …, 2ᵗ − 1}   (random)</p>
+  <p>Step 3 (Prover → Verifier):   send  y := r + s·e (mod q)</p>
+  <p>Verification test:            x  =  αʸ · vᵉ (mod p)</p>
+</div>
+
+<h3>Correctness of Identification</h3>
+<div class="formula-box">
+  <p>αʸ · vᵉ  =  αʳ⁺ˢᵉ · α⁻ˢᵉ  =  αʳ  =  x   ✓</p>
+</div>
+
+<h3>Signature Generation</h3>
+<div class="formula-box">
+  <p>1.  Pick random r ∈ {1, …, q};   compute  x := αʳ (mod p)</p>
+  <p>2.  e := h(x, m)   where m is the message</p>
+  <p>3.  y := r + s·e (mod q)</p>
+  <p>Output signature:  (e, y)    [total ≈ 212 bits with t=72, |q|=140]</p>
+</div>
+
+<h3>Signature Verification</h3>
+<div class="formula-box">
+  <p>Compute:  x̂ := αʸ · vᵉ (mod p)</p>
+  <p>Accept iff:  e  =  h(x̂, m)</p>
+</div>
+
+<h3>Verification Cost (bit-level)</h3>
+<div class="formula-box">
+  <p>Binary representations:  y = Σ yᵢ · 2ⁱ,  e = Σ eᵢ · 2ⁱ   (i = 0 … l−1, l = ⌈log₂ q⌉)</p>
+  <p>Modular multiplications needed:  ≤ 1.5·l + 0.25·t   (average case)</p>
+  <p>With l=140, t=72:  ≈ 228 multiplications</p>
+</div>
+
+<h3>Security Reduction (Forking Lemma)</h3>
+<div class="formula-box">
+  <p>Suppose a forger F succeeds with probability λ(k) using n(k) hash queries.</p>
+  <p>Then discrete-log inverter M succeeds with probability  ≥  λ(k)/n(k) − 1/2ᵏ</p>
+  <p>Two accepting transcripts (x, e', y') and (x, e'', y'') with e' ≠ e'' give:</p>
+  <p>  secret key:  s = (y' − y'') / (e' − e'')  (mod q)</p>
+</div>
+
+<h3>Preprocessing: Combination Step</h3>
+<div class="formula-box">
+  <p>Stored pairs:  (r₁, x₁), …, (rₖ, xₖ)  with  xᵢ = αʳⁱ (mod p)</p>
+  <p>Random indices:  α(0), …, α(d) ∈ {1, …, k}</p>
+  <p>Combined exponent:  rᵥ = Σᵢ₌₀ᵈ  r_{α(i)} · 2ⁱ  (mod q)</p>
+  <p>Combined base:      xᵥ = Πᵢ₌₀ᵈ  x_{α(i)}  (mod p)</p>
+  <p>Consistency holds:  αʳᵛ ≡ xᵥ  (mod p)   ✓</p>
+</div>
+
+<h3>Security Parameter Sizing</h3>
+<div class="formula-box">
+  <p>Security level 2⁷²  requires:  q ≥ 2¹⁴⁰,  t = 72</p>
+  <p>Baby-step giant-step attack on discrete log: O(√q) = O(2⁷⁰) ≈ 2⁷⁰ steps</p>
+  <p>Preprocessing attack search space:  k^{(d−2)·k}  must exceed 2⁷²</p>
+  <p>With k=8, d=6:  8⁽⁸⁻²⁾·⁸ = 8⁴⁸ ≈ 2¹⁴⁴  &gt; 2⁷²   ✓</p>
+</div>
+
+<h3>Performance Comparison</h3>
+<table>
+  <tr>
+    <th>Scheme</th>
+    <th>Signature Generation (multiplications)</th>
+    <th>Preprocessing</th>
+    <th>Verification (multiplications)</th>
+  </tr>
+  <tr><td>Schnorr (t=72)</td><td>0 (online)</td><td>12 ★</td><td>228 ★</td></tr>
+  <tr><td>Fiat-Shamir (k=8, t=9)</td><td>451</td><td>0</td><td>45 ★</td></tr>
+  <tr><td>RSA</td><td>750</td><td>0</td><td>12</td></tr>
+  <tr><td>GQ (Guillou-Quisquater)</td><td>216 ★</td><td>0</td><td>108 ★</td></tr>
+</table>
+<p style="font-size:0.85rem; color:#555;">★ = can be further reduced by optimization</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Plain English</h2>
+
+<div class="plain-box">
+  <h3>The Core Idea: "I know a secret without telling you the secret"</h3>
+  <p>
+    Imagine you know a secret number <em>s</em>. You want to prove to a bank that you know <em>s</em> without ever saying <em>s</em> out loud (because an eavesdropper might be listening). Schnorr's scheme lets you do exactly that using a mathematical trick based on exponentiation.
+  </p>
+  <p>
+    The trick: you pick a random "cover number" <em>r</em>, do a computation <em>x = α<sup>r</sup></em> (like rolling the exponent into a padlock), and send <em>x</em> to the bank. The bank sends back a random challenge <em>e</em>. You respond with <em>y = r + s·e</em> — your secret <em>s</em> is mixed into your response, but the bank can verify you responded correctly without knowing <em>r</em> or <em>s</em> individually. It's like signing a contract with invisible ink that only you can produce but anyone can verify with the right lamp.
+  </p>
+
+  <h3>Why is it secure? The padlock analogy.</h3>
+  <p>
+    The public key <em>v = α<sup>−s</sup></em> is like a padlock that anyone can see, but the key <em>s</em> opens it. Computing <em>s</em> from <em>v</em> means solving the "discrete logarithm problem" — finding the exponent — which is believed to be as hard as searching through 2<sup>140</sup> possibilities (more than the number of atoms in a human body).
+  </p>
+  <p>
+    If you could forge a proof without knowing <em>s</em>, a mathematical argument (the "forking lemma") shows that you could also rewind the conversation, get a second response to a different challenge, and then do simple arithmetic to recover <em>s</em> — which would break the padlock. Since breaking the padlock is assumed hard, forgery must also be hard.
+  </p>
+
+  <h3>Turning identification into signatures</h3>
+  <p>
+    Interactive identification requires the bank to be online to send the challenge. To make a signature (which must work offline), you replace the bank's random challenge with a <em>hash</em> of your commitment and the message: <em>e = h(x, m)</em>. A hash function acts like a random challenge you compute yourself — you can't predict its output ahead of time, so you can't cheat. This is the Fiat-Shamir transform.
+  </p>
+
+  <h3>The preprocessing trick: doing homework in advance</h3>
+  <p>
+    The most expensive part of signing is computing <em>α<sup>r</sup> mod p</em> — a big modular exponentiation. On a tiny smart card (think 1989 hardware), this is slow. Schnorr's insight: you don't need to pick <em>r</em> at signing time. You can precompute a batch of random (<em>r</em>, <em>x</em>) pairs during idle time (while you're not signing anything), store them on the card, and then combine them fast at signing time.
+  </p>
+  <p>
+    The combination uses a clever shuffle: pick random indices, form a weighted sum of stored <em>r</em>-values (weighted by powers of 2) and a product of stored <em>x</em>-values. This is like making a smoothie from pre-cut fruit — the smoothie is just as random as starting from scratch, but the blending takes only 12 small multiplications instead of hundreds.
+  </p>
+  <p>
+    The math guarantees (via matrix invertibility over Z<sub>q</sub>) that no pattern leaks across consecutive signatures — each consecutive block of <em>k</em> signatures looks statistically independent.
+  </p>
+
+  <h3>Short signatures as a bonus</h3>
+  <p>
+    Because all arithmetic is done modulo the small prime <em>q</em> (140 bits), not the large prime <em>p</em> (512 bits), signatures are only 212 bits long — less than half the size of RSA or Fiat-Shamir signatures of the same security level. It's like writing a phone number in a compact country code format rather than spelling out every digit.
+  </p>
+</div>
+
+<hr style="margin-top: 2rem;" />
+<p style="font-size: 0.8rem; color: #888;">
+  Generated by GitHub Copilot per <code>prompts/math.md</code> template &mdash; 2026-06-26
+</p>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abstract–Concrete: Schnorr Identification &amp; Signatures (1989)</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 860px; margin: 48px auto; padding: 0 24px; line-height: 1.75; color: #1a1a1a; background: #fafafa; }
+    h1 { font-size: 1.55rem; border-bottom: 2px solid #2c3e50; padding-bottom: 8px; }
+    .meta { color: #666; font-size: 0.88rem; margin-bottom: 1.8rem; }
+    h2 { font-size: 1.2rem; margin-top: 2.2rem; color: #2c3e50; border-left: 4px solid #2c3e50; padding-left: 10px; }
+    .layer { background: #f0f4f8; border: 1px solid #c8d6e5; border-radius: 6px; padding: 14px 20px; margin: 10px 0; }
+    .layer h3 { margin-top: 0; font-size: 1rem; color: #34495e; }
+    .layer ul { margin: 6px 0 0 0; padding-left: 20px; }
+    .layer ul li { margin-bottom: 5px; }
+    .plain { background: #fffbe6; border-left: 4px solid #f0c040; padding: 16px 20px; border-radius: 4px; font-size: 1rem; }
+    .arrow { text-align: center; font-size: 1.4rem; color: #2c3e50; margin: 6px 0; }
+    code { background: #e8e8e8; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+<h1>Abstract → Concrete: Efficient Identification and Signatures for Smart Cards</h1>
+<div class="meta">
+  <strong>Author:</strong> C.P. Schnorr &nbsp;|&nbsp;
+  <strong>Venue:</strong> CRYPTO 1989, LNCS 435, pp. 239–252 &nbsp;|&nbsp;
+  <strong>Template:</strong> abstract-concrete.md
+</div>
+
+<!-- ═══════════════════ ABSTRACT IDEA ═══════════════════ -->
+<h2>The Big Idea (Plain English)</h2>
+
+<div class="plain">
+  <p>
+    Imagine you want to prove to a bank that you know a secret PIN — but you're terrified that someone is recording the conversation. If you just say the PIN out loud, the eavesdropper wins. So instead you play a clever guessing game: you show the bank a locked box (a mathematical commitment), the bank picks a random challenge number, and you respond in a way that only someone who knows the PIN could. The bank checks your response without ever learning the PIN itself. This is the core of <strong>zero-knowledge identification</strong> — proving knowledge without revealing it.
+  </p>
+  <p>
+    Schnorr's paper asks: can we do this game on a cheap 1989 smart card that has almost no processing power? The expensive part is one modular exponentiation (a big-number power operation). His solution: do that expensive step <em>in advance</em> during idle time, store the results, and when it's time to sign or identify, just mix those pre-cooked values together with a few cheap multiplications. It's like prepping all your vegetables before dinner so the actual cooking takes only minutes.
+  </p>
+  <p>
+    The same game, when the verifier's random challenge is replaced by a <em>hash</em> of the message, becomes a digital signature — compact (212 bits, less than half the size of RSA), fast to generate, and provably secure under the assumption that discrete logarithms are hard to compute.
+  </p>
+</div>
+
+<!-- ═══════════════════ LAYER 1 ═══════════════════ -->
+<h2>Abstract → Concrete: Layer by Layer</h2>
+
+<div class="layer">
+  <h3>Layer 1 — Abstract Paradigm: "Prove Knowledge Without Revealing It"</h3>
+  <ul>
+    <li><strong>Zero-knowledge interactive proof</strong> — a 3-move Σ-protocol where a prover convinces a verifier of a secret without leaking it.</li>
+    <li><strong>Non-interactive signatures via the Fiat-Shamir transform</strong> — replace the verifier's live challenge with a hash of the transcript, making the proof a standalone signature.</li>
+    <li><strong>Offline preprocessing</strong> — decouple expensive computation from the time-critical signing step, enabling constrained hardware (smart cards) to produce signatures in real time.</li>
+  </ul>
+</div>
+
+<div class="arrow">↓</div>
+
+<div class="layer">
+  <h3>Layer 2 — Mathematical Foundation: Hardness Assumption</h3>
+  <ul>
+    <li><strong>Discrete logarithm problem in Z<sub>p</sub>*</strong> — given α, p, and y = αˢ mod p, finding s is computationally hard. This is the one-way function the entire scheme is built on.</li>
+    <li><strong>Prime-order subgroup</strong> — choose a prime q dividing p−1 and a generator α of order q in Z<sub>p</sub>*. All arithmetic lives in this subgroup, which keeps signatures short (proportional to |q| ≈ 140 bits, not |p| ≈ 512 bits).</li>
+    <li><strong>Baby-step giant-step bound</strong> — the best generic attack on discrete log runs in O(√q) steps, which forces q ≥ 2¹⁴⁰ for 2⁷⁰ security.</li>
+  </ul>
+</div>
+
+<div class="arrow">↓</div>
+
+<div class="layer">
+  <h3>Layer 3 — Protocol Mechanics: The 3-Move Identification Game</h3>
+  <ul>
+    <li><strong>Commitment:</strong> Prover picks random r, sends x = αʳ mod p.</li>
+    <li><strong>Challenge:</strong> Verifier sends random e ∈ {0, …, 2ᵗ−1}.</li>
+    <li><strong>Response:</strong> Prover sends y = r + s·e mod q.</li>
+    <li><strong>Verification:</strong> Check that x = αʸ · vᵉ mod p (where v = α⁻ˢ is the public key).</li>
+    <li>Correctness follows from: αʸ · vᵉ = α^(r+se) · α^(−se) = αʳ = x.</li>
+    <li><strong>Security via forking lemma:</strong> two passing transcripts (x, e′, y′) and (x, e″, y″) with e′ ≠ e″ expose s = (y′ − y″)/(e′ − e″) mod q, reducing forgery to solving the discrete log.</li>
+  </ul>
+</div>
+
+<div class="arrow">↓</div>
+
+<div class="layer">
+  <h3>Layer 4 — Signature Scheme: Fiat-Shamir Transform</h3>
+  <ul>
+    <li>Replace the verifier's live challenge with a hash: e = h(x, m) where m is the message.</li>
+    <li>Signature = (e, y) — about 212 bits total with t=72 and |q|=140.</li>
+    <li>Verification: recompute x̂ = αʸ · vᵉ mod p, then check e = h(x̂, m).</li>
+    <li>Security of h requires near-uniformity in x and one-wayness in m to block forgery and chosen-message attacks respectively.</li>
+  </ul>
+</div>
+
+<div class="arrow">↓</div>
+
+<div class="layer">
+  <h3>Layer 5 — Preprocessing Algorithm: Linear Algebra over Z<sub>q</sub></h3>
+  <ul>
+    <li>Store k pairs (rᵢ, xᵢ) with xᵢ = αʳⁱ mod p. Each round combines them: rᵥ = Σ r_{α(i)} · 2ⁱ mod q and xᵥ = Π x_{α(i)} mod p using random indices α(i).</li>
+    <li>Each round is a <strong>linear transformation</strong> over Z<sub>q</sub> represented as a k×k matrix Tᵥ. The map r ↦ Tᵥ·r mod q is invertible because det(Tᵥ) ≠ 0 mod q (the update row has a non-zero determinant).</li>
+    <li><strong>Local randomization (Theorem 4.2):</strong> invertibility of Tᵥ preserves the uniform distribution on (r₁,…,rₖ), so any k consecutive output pairs are statistically independent.</li>
+    <li><strong>Internal randomization (Lemma 4.3 / Theorem 4.4):</strong> distinct index sequences a(0),…,a(d−3) generate distinct linear functions rₖ₊₁(r₁,…,rₖ) over Z<sub>q</sub>, making the attack search space ≈ k^{(d−2)k} — with k=8, d=6 this is ≈ 2¹⁴⁴, well above the 2⁷² security target.</li>
+    <li>Cost: only 2d multiplications mod p per preprocessing round (d=6 → 12 multiplications), versus hundreds for a fresh exponentiation.</li>
+  </ul>
+</div>
+
+<hr style="margin-top: 2.5rem;" />
+<p style="font-size: 0.8rem; color: #888;">
+  Generated by GitHub Copilot per <code>prompts/abstract-concrete.md</code> template &mdash; 2026-06-26
+</p>
+
+</body>
+</html>

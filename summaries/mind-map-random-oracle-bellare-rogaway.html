@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mind Map: Random Oracle Model — Bellare &amp; Rogaway (1993)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #0f0f1a; color: #eee; min-height: 100vh; }
+
+    header { text-align: center; padding: 24px 16px 8px; }
+    header h1 { font-size: 1.1rem; color: #a8d8ea; letter-spacing: 0.03em; }
+    header p  { font-size: 0.78rem; color: #7f8c8d; margin-top: 4px; }
+
+    /* ── legend ── */
+    .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 20px 18px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; }
+    .dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── outer wrapper ── */
+    .map-wrap { max-width: 1220px; margin: 0 auto; padding: 0 20px 48px; }
+
+    /* ── top 3-col row ── */
+    .top-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; }
+
+    .left-col  { display: flex; flex-direction: column; gap: 12px; align-items: flex-end;   padding-right: 12px; }
+    .right-col { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; padding-left:  12px; }
+
+    /* ── center node ── */
+    .center-wrap { display: flex; align-items: center; justify-content: center; padding: 0 10px; }
+    .center {
+      background: #16213e;
+      border: 3px solid #e94560;
+      border-radius: 50%;
+      width: 178px; height: 178px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 14px; flex-shrink: 0;
+    }
+    .center strong { font-size: 0.95rem; color: #e94560; display: block; margin-bottom: 6px; }
+    .center span   { font-size: 0.7rem; color: #ccc; }
+
+    /* ── bottom spanning row ── */
+    .bottom-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding-top: 14px; }
+
+    /* ── node base ── */
+    .node {
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 0.76rem; line-height: 1.45;
+      position: relative; max-width: 310px;
+    }
+    .node strong { display: block; font-size: 0.83rem; margin-bottom: 4px; }
+    .node ul { padding-left: 14px; margin-top: 3px; }
+    .node ul li { margin-bottom: 3px; }
+
+    /* connectors */
+    .node::after { content: ''; position: absolute; top: 50%; width: 16px; height: 2px; background: #333; }
+    .left-col  .node::after { right: -16px; }
+    .right-col .node::after { left:  -16px; }
+
+    /* ── colour themes ── */
+    /* Paradigm – red */
+    .paradigm { background: #2e0a10; border: 1.5px solid #c0392b; }
+    .paradigm strong { color: #e74c3c; }
+    /* Encryption – blue */
+    .encrypt { background: #0d2b50; border: 1.5px solid #2980b9; }
+    .encrypt strong { color: #5dade2; }
+    /* Signature – purple */
+    .sig { background: #250a40; border: 1.5px solid #8e44ad; }
+    .sig strong { color: #bb8fce; }
+    /* Zero-knowledge – teal */
+    .zk { background: #083330; border: 1.5px solid #1abc9c; }
+    .zk strong { color: #76d7c4; }
+    /* Math/Foundations – green */
+    .math { background: #0a2e1a; border: 1.5px solid #27ae60; }
+    .math strong { color: #58d68d; }
+    /* Instantiation – gold */
+    .inst { background: #2e1e00; border: 1.5px solid #d4ac0d; }
+    .inst strong { color: #f9e79f; }
+    /* Security defs – orange */
+    .secdef { background: #2e1500; border: 1.5px solid #e67e22; }
+    .secdef strong { color: #f0a500; }
+
+    /* leaf = dashed, slightly dimmer */
+    .leaf { border-style: dashed; opacity: 0.88; font-size: 0.72rem; }
+    .leaf strong { font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mind Map — Random Oracles Are Practical: A Paradigm for Designing Efficient Protocols</h1>
+  <p>Mihir Bellare &amp; Phillip Rogaway &nbsp;·&nbsp; ACM CCS 1993 &nbsp;·&nbsp; Template: mind-map.md</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#c0392b"></div> Core Paradigm</div>
+  <div class="legend-item"><div class="dot" style="background:#2980b9"></div> Encryption</div>
+  <div class="legend-item"><div class="dot" style="background:#8e44ad"></div> Signatures</div>
+  <div class="legend-item"><div class="dot" style="background:#1abc9c"></div> Zero-Knowledge</div>
+  <div class="legend-item"><div class="dot" style="background:#27ae60"></div> Math Foundations</div>
+  <div class="legend-item"><div class="dot" style="background:#d4ac0d"></div> Instantiation</div>
+  <div class="legend-item"><div class="dot" style="background:#e67e22"></div> Security Definitions</div>
+</div>
+
+<div class="map-wrap">
+
+  <!-- TOP 3-COLUMN ROW -->
+  <div class="top-row">
+
+    <!-- LEFT -->
+    <div class="left-col">
+
+      <div class="node paradigm">
+        <strong>Random Oracle Paradigm</strong>
+        <ul>
+          <li>Model hash as perfect random function R:{0,1}*→{0,1}∞</li>
+          <li>All parties (including adversary) query R</li>
+          <li>Prove security in RO model → instantiate R with hash</li>
+          <li>Middle ground: heuristic but principled</li>
+        </ul>
+      </div>
+
+      <div class="node math">
+        <strong>Trapdoor Permutations</strong>
+        <ul>
+          <li>Generator G* outputs (f, f⁻¹, d)</li>
+          <li>f is a permutation on {0,1}ᵏ; f⁻¹ is its inverse</li>
+          <li>One-wayness: ε(k) = Pr[M inverts f] is negligible</li>
+          <li>Examples: RSA, modular squaring</li>
+        </ul>
+      </div>
+
+      <div class="node encrypt">
+        <strong>Encryption — Polynomial / Semantic Security</strong>
+        <ul>
+          <li>Scheme: E_G(x) = f(r) ‖ G(r)⊕x</li>
+          <li>r random from domain of f; G is random generator</li>
+          <li>Ciphertext size O(|x|+k) — far more efficient than prior work</li>
+          <li>One trapdoor evaluation each way</li>
+        </ul>
+      </div>
+
+      <div class="node encrypt">
+        <strong>Encryption — CCA &amp; Non-Malleability</strong>
+        <ul>
+          <li>Scheme: E_{G,H}(x) = f(r) ‖ G(r)⊕x ‖ H(r‖x)</li>
+          <li>H binds ciphertext parts; prevents modification</li>
+          <li>Simultaneously achieves Rackoff-Simon CCA + Dolev-Dwork-Naor non-malleability</li>
+          <li>Same efficiency as Scheme 1</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- CENTER -->
+    <div class="center-wrap">
+      <div class="center">
+        <strong>Random Oracle Model</strong>
+        <span>Paradigm for provably secure, practically efficient cryptographic protocols</span>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+
+      <div class="node sig">
+        <strong>Digital Signatures — Hash-then-Invert</strong>
+        <ul>
+          <li>Sign: σ = f⁻¹(H(m))</li>
+          <li>Verify: f(σ) = H(m)</li>
+          <li>Formalizes widely-used RSA+hash heuristic</li>
+          <li>Proven secure vs adaptive chosen-message attack</li>
+        </ul>
+      </div>
+
+      <div class="node zk">
+        <strong>Non-Interactive Zero-Knowledge (NIZK)</strong>
+        <ul>
+          <li>Any NP language with interactive ZK proof → NIZK in RO model</li>
+          <li>Prover replaces verifier's challenge with hash of transcript</li>
+          <li>Error: T(n)·2⁻ᵏ⁽ⁿ⁾ (exponentially small)</li>
+          <li>Communication/compute blowup: O(k(n))</li>
+        </ul>
+      </div>
+
+      <div class="node inst">
+        <strong>Instantiation of Random Oracles</strong>
+        <ul>
+          <li>Raw MD5/SHA fail (length extension, collision attacks)</li>
+          <li>Good candidates: truncated hash, input-restricted hash, h(xx), first-block compression</li>
+          <li>Key principle: choose h independently of protocol structure</li>
+        </ul>
+      </div>
+
+      <div class="node paradigm">
+        <strong>Justification of Known Heuristics</strong>
+        <ul>
+          <li>RSA-sign = f⁻¹(H(m)): proven secure in RO model</li>
+          <li>Blum's non-interactive ZK trick: proven secure in RO model</li>
+          <li>Zheng-Seberry encryption scheme: justified</li>
+        </ul>
+      </div>
+
+    </div>
+  </div><!-- end top-row -->
+
+  <!-- BOTTOM SPANNING ROW — leaf / math detail nodes -->
+  <div class="bottom-row">
+
+    <div class="node secdef leaf">
+      <strong>CP-Adversary (Chosen-Plaintext)</strong>
+      <ul>
+        <li>A = (F, A₁) both with oracle access</li>
+        <li>Indistinguishability game on m₀, m₁</li>
+        <li>Win prob &lt; ½ + k⁻ω(1) for all PPT A</li>
+      </ul>
+    </div>
+
+    <div class="node secdef leaf">
+      <strong>RS-Adversary (Chosen-Ciphertext)</strong>
+      <ul>
+        <li>A₁ gets decryption oracle D^R except on challenge ct</li>
+        <li>Stronger than CPA; implies non-malleability</li>
+        <li>Definition adapted from Rackoff-Simon</li>
+      </ul>
+    </div>
+
+    <div class="node secdef leaf">
+      <strong>Non-Malleability (M-Adversary)</strong>
+      <ul>
+        <li>Interesting relation ρ: cannot produce related ciphertext</li>
+        <li>|e(k) − e*(k)| negligible for all ρ and all (F,A)</li>
+        <li>Strictly stronger than polynomial security</li>
+      </ul>
+    </div>
+
+    <div class="node math leaf">
+      <strong>Security Proof: Signature Forgery → DL Inversion</strong>
+      <ul>
+        <li>Forger F makes n(k) queries, succeeds with prob λ(k)</li>
+        <li>Inverter M: guess index t, plant challenge y at H-query t</li>
+        <li>If forgery hits query t: output f⁻¹(y) = σ</li>
+        <li>M succeeds with prob ≥ λ(k)/n(k) − 1/2ᵏ</li>
+      </ul>
+    </div>
+
+    <div class="node zk leaf">
+      <strong>ZK Simulator in RO Model</strong>
+      <ul>
+        <li>Simulator outputs (s, r′, T) with T = partial oracle prescription</li>
+        <li>ROC(T): random oracle completion consistent with T</li>
+        <li>Prover can prescribe polynomial-many oracle values</li>
+        <li>Enables simulation of honest-verifier view</li>
+      </ul>
+    </div>
+
+    <div class="node inst leaf">
+      <strong>Why MD5 Fails as Random Oracle</strong>
+      <ul>
+        <li>Length extension: MD5(xyz) computable from MD5(x) + |x|</li>
+        <li>Compression function has known collisions (den Boer &amp; Bosselaers)</li>
+        <li>Structure exploitable by adversaries aware of instantiation</li>
+      </ul>
+    </div>
+
+    <div class="node math leaf">
+      <strong>Negligibility &amp; PPT Definitions</strong>
+      <ul>
+        <li>ε(k) negligible: ∀c ∃k_c s.t. ε(k) ≤ k⁻ᶜ for k &gt; k_c</li>
+        <li>PPT = probabilistic polynomial-time</li>
+        <li>Non-uniform adversaries considered throughout</li>
+      </ul>
+    </div>
+
+  </div><!-- end bottom-row -->
+
+</div><!-- end map-wrap -->
+
+<p style="text-align:center; font-size:0.75rem; color:#555; padding-bottom: 20px;">
+  Generated by GitHub Copilot · prompts/mind-map.md · 2026-06-26
+</p>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mind Map: Schnorr Identification &amp; Signatures (1989)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+
+    header { text-align: center; padding: 24px 16px 8px; }
+    header h1 { font-size: 1.1rem; color: #a8d8ea; letter-spacing: 0.03em; }
+    header p  { font-size: 0.78rem; color: #7f8c8d; margin-top: 4px; }
+
+    /* ── legend ── */
+    .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 10px 20px 16px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; }
+    .dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── mindmap grid ── */
+    .map { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-rows: auto auto auto; gap: 0; align-items: center; padding: 10px 20px 40px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── node base ── */
+    .node { border-radius: 10px; padding: 10px 14px; font-size: 0.78rem; line-height: 1.4; position: relative; }
+    .node strong { display: block; font-size: 0.85rem; margin-bottom: 3px; }
+    .node ul { padding-left: 14px; margin-top: 4px; }
+    .node ul li { margin-bottom: 3px; }
+
+    /* ── CENTER ── */
+    .center-col { grid-column: 2; grid-row: 1 / 4; display: flex; align-items: center; justify-content: center; padding: 0 18px; }
+    .center { background: #16213e; border: 3px solid #e94560; border-radius: 50%; width: 170px; height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 14px; flex-shrink: 0; }
+    .center strong { font-size: 1rem; color: #e94560; display: block; margin-bottom: 6px; }
+    .center span { font-size: 0.72rem; color: #ccc; }
+
+    /* ── LEFT column ── */
+    .left-col { grid-column: 1; display: flex; flex-direction: column; gap: 14px; align-items: flex-end; padding-right: 10px; }
+    /* ── RIGHT column ── */
+    .right-col { grid-column: 3; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; padding-left: 10px; }
+
+    /* ── connector lines via border tricks ── */
+    .node::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 2px;
+      background: #444;
+    }
+    .left-col  .node::after { right: -18px; }
+    .right-col .node::after { left: -18px; }
+
+    /* ── color themes ── */
+    /* Protocol (blue) */
+    .protocol { background: #0d3b6e; border: 1px solid #2980b9; }
+    .protocol strong { color: #5dade2; }
+    /* Security (red/orange) */
+    .security { background: #4a1010; border: 1px solid #c0392b; }
+    .security strong { color: #e74c3c; }
+    /* Math (green) */
+    .math { background: #0a3d2e; border: 1px solid #27ae60; }
+    .math strong { color: #58d68d; }
+    /* Signature (purple) */
+    .signature { background: #2d0a4e; border: 1px solid #8e44ad; }
+    .signature strong { color: #bb8fce; }
+    /* Preprocessing (teal) */
+    .preproc { background: #0a3340; border: 1px solid #1abc9c; }
+    .preproc strong { color: #76d7c4; }
+    /* Performance (gold) */
+    .perf { background: #3d2a00; border: 1px solid #d4ac0d; }
+    .perf strong { color: #f9e79f; }
+
+    /* leaf nodes – slightly smaller, lighter border */
+    .leaf { font-size: 0.72rem; opacity: 0.9; border-style: dashed; }
+    .leaf strong { font-size: 0.78rem; }
+
+    /* bottom row spanning full width */
+    .bottom-row { grid-column: 1 / 4; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; padding-top: 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mind Map — Efficient Identification and Signatures for Smart Cards</h1>
+  <p>C.P. Schnorr &nbsp;·&nbsp; CRYPTO 1989 &nbsp;·&nbsp; Template: mind-map.md</p>
+</header>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#2980b9"></div> Protocol Design</div>
+  <div class="legend-item"><div class="dot" style="background:#c0392b"></div> Security / Hardness</div>
+  <div class="legend-item"><div class="dot" style="background:#27ae60"></div> Math Foundations</div>
+  <div class="legend-item"><div class="dot" style="background:#8e44ad"></div> Signature Scheme</div>
+  <div class="legend-item"><div class="dot" style="background:#1abc9c"></div> Preprocessing</div>
+  <div class="legend-item"><div class="dot" style="background:#d4ac0d"></div> Performance</div>
+</div>
+
+<!-- Mind Map Grid -->
+<div class="map">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+
+    <div class="node protocol">
+      <strong>3-Move Identification Protocol (Σ-protocol)</strong>
+      <ul>
+        <li>Prover → commit: x = αʳ mod p</li>
+        <li>Verifier → challenge: e ∈ {0,…,2ᵗ−1}</li>
+        <li>Prover → response: y = r + se mod q</li>
+        <li>Verify: x = αʸ vᵉ mod p</li>
+      </ul>
+    </div>
+
+    <div class="node math">
+      <strong>Prime-Order Subgroup</strong>
+      <ul>
+        <li>p, q primes; q | p−1</li>
+        <li>α of order q in Z<sub>p</sub>*</li>
+        <li>All ops mod q keep keys short</li>
+        <li>q ≥ 2¹⁴⁰, p ≥ 2⁵¹²</li>
+      </ul>
+    </div>
+
+    <div class="node security">
+      <strong>Discrete Logarithm Hardness</strong>
+      <ul>
+        <li>Public key: v = α⁻ˢ mod p</li>
+        <li>Secret key: s = log_α(v⁻¹)</li>
+        <li>One-way: easy to compute v from s,<br>hard to invert</li>
+      </ul>
+    </div>
+
+    <div class="node security leaf">
+      <strong>Baby-Step Giant-Step Attack</strong>
+      <ul>
+        <li>Solves DL in O(√q) ≈ 2⁷⁰ steps</li>
+        <li>Forces q ≥ 2¹⁴⁰ for 2⁷⁰ security</li>
+        <li>Dictates minimum key sizes</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- CENTER -->
+  <div class="center-col">
+    <div class="center">
+      <strong>Schnorr Scheme</strong>
+      <span>Efficient DL-based identification &amp; signatures for constrained hardware</span>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <div class="node signature">
+      <strong>Signature Scheme (Fiat-Shamir Transform)</strong>
+      <ul>
+        <li>Replace live challenge with hash:<br>e = h(x, m)</li>
+        <li>Signature = (e, y) ≈ 212 bits</li>
+        <li>Verify: x̂ = αʸvᵉ mod p; check e = h(x̂,m)</li>
+        <li>&lt; ½ size of RSA / Fiat-Shamir</li>
+      </ul>
+    </div>
+
+    <div class="node signature leaf">
+      <strong>Hash Function Requirements</strong>
+      <ul>
+        <li>Near-uniform in x → blocks brute-force</li>
+        <li>One-way in m → blocks chosen-msg attack</li>
+        <li>Collision-free in m NOT required</li>
+      </ul>
+    </div>
+
+    <div class="node security leaf">
+      <strong>Forking Lemma (Security Proof)</strong>
+      <ul>
+        <li>Two transcripts (x,e′,y′) &amp; (x,e″,y″), e′≠e″</li>
+        <li>s = (y′−y″)/(e′−e″) mod q</li>
+        <li>Forgery ⟹ DL solver ⟹ contradiction</li>
+        <li>Forger advantage ≤ λ(k)/n(k)</li>
+      </ul>
+    </div>
+
+    <div class="node preproc">
+      <strong>Preprocessing Algorithm</strong>
+      <ul>
+        <li>Store k pairs (rᵢ, xᵢ), xᵢ = αʳⁱ mod p</li>
+        <li>Combine: rᵥ = Σ r_{α(i)}·2ⁱ mod q</li>
+        <li>Combine: xᵥ = Π x_{α(i)} mod p</li>
+        <li>Cost: 2d mults mod p per round</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM ROW – spanning all 3 columns -->
+  <div class="bottom-row">
+
+    <div class="node math leaf">
+      <strong>Linear Algebra over Z<sub>q</sub></strong>
+      <ul>
+        <li>Round u = matrix Tᵤ acting on (r₁,…,rₖ)</li>
+        <li>det(Tᵤ) ≠ 0 mod q → invertible</li>
+        <li>Invertibility preserves uniform distribution</li>
+      </ul>
+    </div>
+
+    <div class="node preproc leaf">
+      <strong>Local Randomization (Thm 4.2)</strong>
+      <ul>
+        <li>Any k consecutive output pairs are independent</li>
+        <li>Follows from Tᵤ invertibility</li>
+        <li>Chosen index a(d−1) = u forces this</li>
+      </ul>
+    </div>
+
+    <div class="node preproc leaf">
+      <strong>Internal Randomization (Lemma 4.3 / Thm 4.4)</strong>
+      <ul>
+        <li>Distinct index vectors a → distinct linear functions rₖ₊₁</li>
+        <li>Attack search space ≈ k^{(d−2)k}</li>
+        <li>k=8, d=6 → 8⁴⁸ ≈ 2¹⁴⁴ &gt; 2⁷²  ✓</li>
+      </ul>
+    </div>
+
+    <div class="node perf leaf">
+      <strong>Performance vs. Competitors</strong>
+      <ul>
+        <li>Sig. generation (online): 0 mults (Schnorr) vs 451 (Fiat-Shamir), 750 (RSA)</li>
+        <li>Preprocessing: 12 mults (Schnorr) vs 0 (others)</li>
+        <li>Verification: 228 mults (Schnorr) vs 45 (F-S), 12 (RSA)</li>
+        <li>Storage: ≈ 800 bytes EEPROM total</li>
+      </ul>
+    </div>
+
+    <div class="node math leaf">
+      <strong>ElGamal Connection</strong>
+      <ul>
+        <li>ElGamal: ry − sx ≡ m (mod p−1)</li>
+        <li>Schnorr: replace x → hash e, simplify → y = r + se mod q</li>
+        <li>Shorter signatures from subgroup arithmetic</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+
+<p style="text-align:center; font-size:0.75rem; color:#555; padding-bottom: 20px;">
+  Generated by GitHub Copilot · prompts/mind-map.md · 2026-06-26
+</p>
+</body>
+</html>
